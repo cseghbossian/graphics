@@ -59,7 +59,6 @@ function initVertexBuffers(gl) {
   var vertices = new Float32Array(ve);
 
   var c = findColors(nn);
-  console.log("in initVertexBuffers: c= ", c);
 
   var green = [  
     //green normals
