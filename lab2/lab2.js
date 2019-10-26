@@ -198,7 +198,7 @@ function findNormalComponents(p) {
 /*
 * Parameters:
 * ------------
-* p           :: array holding x, y, and z components of all 24 points
+* p           :: array holding x, y, and z coordinates of all 24 points (only works for 24 points)
 * 
 * Functionality:
 * --------------
@@ -229,7 +229,7 @@ function findNormSegments(p) {
 /*
 * Parameters:
 * ------------
-* p           :: array holding x, y, and z components of all 24 points
+* p           :: array holding x, y, and z coordinates of all 24 points
 * 
 * Functionality:
 * --------------
@@ -422,7 +422,7 @@ function findColors(nn) {
 *
 */
   var colors = [];
-  for(var i = 0; i < nn.length*3; i+=3) {
+  for(var i = 0; i < 72; i+=3) {
     var cos = cosBetween(nn[i], nn[i+1],nn[i+2],1,1,1);
     colors.push(cos,0,0);
   }

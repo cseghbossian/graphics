@@ -218,9 +218,9 @@ function click(ev, gl, canvas, is_red, lp, rp) {
 function tree(x,y,z,a,b,L,n,p) {
 /* Parameters:
 * ------------
-* x          :: float specifying starting x-component of tree (or recursive subtree)
-* y          :: float specifying starting y-component of tree (or recursive subtree)
-* z          :: float specifying starting z-component of tree (or recursive subtree)
+* x          :: float specifying starting x-coordinate of tree (or recursive subtree)
+* y          :: float specifying starting y-coordinate of tree (or recursive subtree)
+* z          :: float specifying starting z-coordinate of tree (or recursive subtree)
 * a          :: float specifying alpha angle of tree (or recursive subtree)
 * b          :: float specifying beta angle of tree (or recursive subtree)
 * L          :: float specifying length of segment of tree (or recursive subtree)
@@ -234,7 +234,7 @@ function tree(x,y,z,a,b,L,n,p) {
 *
 * Outcome:
 * --------
-* Fills p array with floats representing x-, y-, and z-components of vertices of tree
+* Fills p array with floats representing x-, y-, and z-coordinates of vertices of tree
 * Points are represented by three successive floats
 * Each pair of successive points represent start and end of a line segment
 * p = [x,y,z, x,y,z,    x,y,z, x,y,z,    ... ]
@@ -280,17 +280,17 @@ function translateTree(gen_p, x, y, p) {
 /* Parameters:
 * ------------
 * gen_p      :: float array filled with the vertices of a general left or right tree (one that starts at (0,0,0))
-* x          :: float specifying starting x-component of tree 
-* y          :: float specifying starting y-component of tree
+* x          :: float specifying starting x-coordinate of tree 
+* y          :: float specifying starting y-coordinate of tree
 * p          :: float array where translated tree vertices are to be pushed
 * 
 * Functionality:
 * --------------
-* - Translates x- and y-components by the values given by x and y
+* - Translates x- and y-coordinates by the values given by x and y
 *
 * Outcome:
 * --------
-* Fills p array with floats representing x-, y-, and z-components of vertices of translated tree(starting at (x,y,0))
+* Fills p array with floats representing x-, y-, and z-coordinates of vertices of translated tree(starting at (x,y,0))
 * Points are represented by three successive floats
 * Each pair of successive points represent start and end of a line segment
 * p = [x,y,z, x,y,z,    x,y,z, x,y,z,    ... ]
