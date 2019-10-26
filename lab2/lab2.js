@@ -234,7 +234,7 @@ function findNormSegments(p) {
 * Functionality:
 * --------------
 * - Calls findNormalComponents(...) to find x, y, and z components of each normal
-* - Returns array of end points for each vector
+* - Returns array of end points for each norm vector
 * - Starting points of each normal are the points in p
 *
 */
@@ -422,7 +422,7 @@ function findColors(nn) {
 *
 */
   var colors = [];
-  for(var i = 0; i < 72; i+=3) {
+  for(var i = 0; i < nn.length*3; i+=3) {
     var cos = cosBetween(nn[i], nn[i+1],nn[i+2],1,1,1);
     colors.push(cos,0,0);
   }
