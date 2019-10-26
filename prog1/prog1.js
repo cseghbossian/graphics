@@ -61,8 +61,8 @@ function main() {
   // Later, x and y positions of click can be added to these points 
   var lp = [];
   var rp = [];
-  tree(0, 0, 0, 0, 0, 50/canvas.width, 4, lp);
-  tree(0, 0, 0, 0, 0, 40/canvas.width, 6, rp);
+  tree(0, 0, 0, 0, 0, 50/canvas.width, 5, lp);
+  tree(0, 0, 0, 0, 0, 40/canvas.width, 7, rp);
 
   // Register function (event handler) to be called on a mouse press
   canvas.onmousedown = function(ev){ click(ev, gl, canvas, is_red, lp, rp); };
