@@ -1,0 +1,147 @@
+<!--
+  Celine Seghbossian <cseghbos@ucsc.edu>
+  CSE 160 -- Lab 2
+  Sunday, October 20, 2019
+
+  List of Files:
+
+  /prog1
+    lab2.js
+    driver.html 
+    features.html (this file)
+    output1.jpg
+    output2.jpg
+    output3.jpg
+    output4.jpg
+    output5.jpg
+    output6.jpg
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Celine Seghbossian's Lab#2 Submission</title>
+  </head>
+
+  <body>
+  <p>
+    Celine Seghbossian<br>
+    Login: cseghbos@ucsc.edu<br>
+    CSE 160 -- Lab 2<br>
+    Sunday, October 20, 2019<br>
+  </p>
+  <p>
+    List of Files:<br>
+    /prog1/<br>
+    &nbsp;	prog1.js<br>
+    &nbsp;	driver.html <br>
+    &nbsp;	features.html (this file)<br>
+    &nbsp; output1.jpg<br>
+    &nbsp; output2.jpg<br>
+    &nbsp; output3.jpg<br>
+    &nbsp; output4.jpg<br>
+    &nbsp; output5.jpg<br>
+    &nbsp; output6.jpg<br>
+  </p>
+  <span style="display:inline-block; width: 800px;">
+    This program implements most of the functionality as specified in the Lab2 Requirements.
+    However, it does not have the ability to show normals in flat-shading mode.  <br>
+    <ul>
+
+        <li>
+            <b>Calculate the color of each polygon.</b>
+            The appearance (color that we observe) of a polygon depends on
+            its material property (intrinsic to the polygon) and its relationship
+            with the light source (and later with the viewer as well).
+            For the latter, we will be using Lambertian reflectance.
+            Meaning we will need to know the surface normal and
+            the light color and direction (both are given).
+            So, the first step is given the vertex coordinates,
+            you will need to calculate a surface normal for each polygon
+            <p>
+            For this task, we shall assume that all our polygons are planar.
+            And that the vertices are specified in a counter-clockwise order
+            as viewed from the outside.
+            You will need to form 2 vectors and calculate their cross product.
+            Make sure you are using the right sequence of points for the vectors,
+            and the right sequence of vectors for the cross product.
+            
+            <li>
+            <b>Render Mode.</b>
+            Add a toggle button to switch the rendering mode between flat shading
+            and wireframe.
+            
+            <li>
+            <b>Normals.</b>
+            Add another toggle button to turn the display of surface normals on/off.
+            Display surface normals in green.
+            This is useful to help you visually debug your code especially when working
+            with more complex geometries.
+            (You should have 3 toggle buttons altogether by now).
+            
+            <li>
+            <b>Apply Lambert's reflectance function.</b>
+            Calculate the perceived color for each polygon using diffuse lighting.
+            
+            <li>
+            <b>Add alternate view (carried over from Prog1):</b>
+            Allow viewer to look at this object from 2 views: a top view and a front view.
+            Allow the user to switch between these 2 views using a toggle button.
+            You can use orthographic projection.
+            
+            <li>
+            <b>Pass information to shaders.</b>
+            There are multiple ways to do this.
+            The easy way (for this assignment) is to calculate the colors on the CPU/javascript side,
+            and pass the colors to the shader.
+            However, be aware that this will require some code refactoring later on when we talk about smooth shading.
+            
+            What we would like you to do is the following:
+              <ul>
+              <li>
+                Calculate the surface normals on the CPU side (javascript code).
+              <li>
+                Calculate the color of each polygon on the CPU side.
+                Replicate the color for each vertex of the polygon.
+              <li>
+                Pass the vertices and colors of the polygons to the GPU to render.
+              <li>
+                Apply view transformation on the vertices of the polygons on the GPU prior to rendering.
+              </ul>
+            
+            <p>
+            For the last step, you'll need to call setOrtho and setLookAt (see lib/cuon-matrix.js)
+            which will generate a view-projection matrix for you.
+            Pass this matrix as uniform to the vertex shader so that each vertex will be transformed properly.
+            
+            <p>
+            Since the color of a polygon is determined on the CPU side,
+            the vertex shader does not need to do anything with regards to colors.
+            On the other hand,
+            the fragment shader takes the color that was calculated in the CPU
+            and uses that to fill (or paint) each pixel of the projected polygon.
+            
+            </ul>
+            
+        For more information on implementation, please reference function descriptions in lab2.js<br><br>
+
+        Implementation Issues:<br>
+        The program does not show normal vectors while in flat-shading mode. However, it automatically switches to
+        wireframe viewing when normals are toggled on and does not allow for any visible glitching. This implementation 
+        error was largely because only one index buffer is passed to the shader for each draw call.
+        
+
+  </span>
+  
+  <br> Link for grader: 
+    <a href="driver.html">driver.html</a><br>
+    <img src="output1.jpg" width = "500">
+    <img src="output3.jpg" width = "500"><br>
+    <img src="output2.jpg" width = "500">
+    <img src="output4.jpg" width = "500"><br>
+    <img src="output5.jpg" width = "500">
+    <img src="output6.jpg" width = "500"><br>
+  </body>
+</html>
+
