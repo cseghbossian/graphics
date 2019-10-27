@@ -19,7 +19,7 @@ var FSHADER_SOURCE =
   '#endif\n' +
   'varying vec4 v_Color;\n' +
   'void main() {\n' +
-  '  gl_FragColor = v_Color;\n' +
+  '  gl_FragColor = vec4 (1,1,1,1);\n' +
   '}\n';
 
 //GLOBAL VARIABLES
@@ -338,25 +338,6 @@ function reload() {
   // Register function (event handler) to be called on a mouse press
   canvas.onmousedown = function(ev){ click(ev, gl, canvas); };
 
-  // // Set the vertex information
-  // var b = initVertexBuffers(gl, cylinderVerts);
-  // if (b < 0) {
-  //   console.log('Failed to set the vertex information');
-  //   return;
-  // }
-
-  // // Clear color and depth buffer
-  // gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-  // // Set RENDER MODE
-  // if(r%2==1) {
-  //   gl.drawElements(gl.LINES, b, gl.UNSIGNED_BYTE, 0);
-  // }
-  // else {
-  //   //flat shading
-  //   gl.drawElements(gl.TRIANGLES, b, gl.UNSIGNED_BYTE, 0);
-  // }
-
 }
 
 function generateTreeData() {
@@ -427,50 +408,6 @@ function setView(gl) {
   gl.uniformMatrix4fv(u_MvpMatrix, false, mvpMatrix.elements);
 }
 
-function initVertexBuffers(gl, vv) {
-  /* Parameters:
-  * ------------
-  * vv         :: Array of vertices to be inputted into buffer
-  * gl         :: WebGLProgram containing shader program
-  * 
-  * Functionality:
-  * --------------
-  * - Creates a buffer object
-  * - Binds the buffer object to target and writes vertices data into it
-  * - Assigns the buffer object to a_Position variable
-  *
-  * Outcome:
-  * --------
-  * Initializes vertex buffer by giving it a list of 3-d vertices to draw
-  */
-    var vertices = new Float32Array(vv);
-    var n = vv.length/3;
-  
-    // Create a buffer object
-    var vertexBuffer = gl.createBuffer();
-    if (!vertexBuffer) {
-      console.log('Failed to create the buffer object');
-      return -1;
-    }
-  
-    // Bind the buffer object to target and write vertices data into it
-    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-  
-    var a_Position = gl.getAttribLocation(gl.program, 'a_Position');
-    if (a_Position < 0) {
-      console.log('Failed to get the storage location of a_Position');
-      return -1;
-    }
-    // Assign the buffer object to a_Position variable
-    gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, 0, 0);
-  
-    // Enable the assignment to a_Position variable
-    gl.enableVertexAttribArray(a_Position);
-  
-    return n;
-}
-
 function click(ev, gl, canvas) {
   var x = ev.clientX; // x coordinate of a click
   var y = ev.clientY; // y coordinate of a click
@@ -491,7 +428,7 @@ function click(ev, gl, canvas) {
   else if(button == 2) {
     console.log('Right click at (' + x + ', ' + y + ')\n');
   }
-  drawTree(gl, canvas, button, x, y);
+  drawTree(gl, button, x, y);
 }
 
 function translateTree(type, x, y) {
@@ -513,19 +450,40 @@ function translateTree(type, x, y) {
 * vv = [x,y,z, x,y,z,    x,y,z, x,y,z,    ... ]
 */ 
   var vv = [];
-  for(var i = 0; i < type.length; i +=3) {
-    vv.push(type[i] + x);
-    vv.push(type[i+1] + y);
-    vv.push(type[i+2]);
+  if(type==0) {
+    for(var i = 0; i < leftTree.length; i +=3) {
+      vv.push(leftTree[i] + x);
+      vv.push(leftTree[i+1] + y);
+      vv.push(leftTree[i+2]);
+    }
   }
+  else if (type==2) {
+    for(var i = 0; i < rightTree.length; i +=3) {
+      vv.push(rightTree[i] + x);
+      vv.push(rightTree[i+1] + y);
+      vv.push(rightTree[i+2]);
+    }
+  }
+  else {
+    console.log("Unknown type in translateTree")
+  }
+  
   return vv;
 }
 
-function drawTree(gl, canvas, type, x, y) {
-  var vv = translateTree(button, x, y);
-  //set color
+function drawTree(gl, type, x, y) {
+  var vv = translateTree(type, x, y);
+  // Set color INCOMPLETE
+  
+  // Initialize vertex buffer with cylinder vertices
+  if (!initVertexBuffer(gl, cylinderVerts, 3, gl.FLOAT, 'a_Position'))
+    return -1;
+  
+  console.log("in drawTree, vv.length = ", vv.length);
+
+  // Draw each branch
   for(var i = 0; i < vv.length; i+=6) {
-    //find start and end points for each branch
+    // Find start and end points for each branch
     var x1 = vv[i];
     var y1 = vv[i+1];
     var z1 = vv[i+2];
@@ -533,14 +491,109 @@ function drawTree(gl, canvas, type, x, y) {
     var y2 = vv[i+4];
     var z2 = vv[i+5];
 
-    //set transformation matrices
-    var T = [];
-    var Rx = [];
-    var Ry = [];
-    var S = [];
+    // Set transformation matrices
+    var Rx = new Matrix4();
+    var Ry = new Matrix4();
+    var T = new Matrix4();
+    var S = new Matrix4();
     findMatrices(x1, y1, z1, x2, y2, z2, T, Rx, Ry, S);
 
-    //pass vertices of general cylinder to shader
-    initVertexBuffers(gl, cylinderVerts);
+    // Pass matrices to shader INCOMPLETE
+
+    // Set RENDER mode and draw
+    if(r%2==0){ // flat shading
+      var b = initIndexBuffers(gl, cylinderTriangles);
+      console.log("DEBUG b = ", b);
+
+      if(b<=0) 
+        return -1;
+      
+      gl.drawElements(gl.TRIANGLES, b, gl.UNSIGNED_BYTE, 0);
+      console.log("DEBUG in drawTree drawing");
+    }
+    else { // wireframe
+      var b = initIndexBuffers(gl, cylinderLines);
+
+      console.log("DEBUG b = ", b);
+
+      if(b<=0) 
+        return -1;
+
+      gl.drawElements(gl.LINES, b, gl.UNSIGNED_BYTE, 0);
+      console.log("DEBUG in drawTree drawing");
+    }
+    
+
+
+  
   }
 }
+
+function initVertexBuffer(gl, data, num, type, attribute) {
+/* Parameters:
+* ------------
+* gl         :: WebGLProgram containing shader program
+* data       :: Values to fill into buffer
+* num        :: dimension of points/vectors
+* type       :: type of values (e.g. gl.FLOAT)
+* attribute  :: name of attribute in shader to bind buffer to
+* 
+* Functionality:
+* --------------
+*
+* Outcome:
+* --------
+* 
+*/
+  var buffer = gl.createBuffer();   // Create a buffer object
+  if (!buffer) {
+    console.log('Failed to create the buffer object');
+    return false;
+  }
+  // Write date into the buffer object
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+  // Assign the buffer object to the attribute variable
+  var a_attribute = gl.getAttribLocation(gl.program, attribute);
+  if (a_attribute < 0) {
+    console.log('Failed to get the storage location of ' + attribute);
+    return false;
+  }
+  gl.vertexAttribPointer(a_attribute, num, type, false, 0, 0);
+  // Enable the assignment of the buffer object to the attribute variable
+  gl.enableVertexAttribArray(a_attribute);
+
+  return true;
+}
+
+function initIndexBuffers(gl, vv) {
+  /* Parameters:
+  * ------------
+  * vv         :: Array of vertices to be inputted into buffer
+  * gl         :: WebGLProgram containing shader program
+  * 
+  * Functionality:
+  * --------------
+  * - Creates a buffer object
+  * - Binds the buffer object to target and writes vertices data into it
+  * - Assigns the buffer object to a_Position variable
+  *
+  * Outcome:
+  * --------
+  * Initializes index buffer by giving it a list of indices
+  */
+    var n = vv.length/3;
+  
+    // Create a buffer object
+    var indexBuffer = gl.createBuffer();
+    if (!indexBuffer) {
+      console.log('Failed to create the buffer object');
+      return -1;
+    }
+  
+    // Bind the buffer object to target and write vertices data into it
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, vv, gl.STATIC_DRAW);
+  
+    return n;
+  }
