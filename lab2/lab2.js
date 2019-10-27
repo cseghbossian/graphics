@@ -68,8 +68,8 @@ function initVertexBuffers(gl) {
     0, 1, 0,  0, 1, 0,  0, 1, 0,  0, 1, 0,  
     0, 1, 0,  0, 1, 0,  0, 1, 0,  0, 1, 0,  
     0, 1, 0,  0, 1, 0,  0, 1, 0,  0, 1, 0
-
   ];
+  
   var colors = new Float32Array(c.concat(green));
 
   var polygons = new Uint8Array([       // Indices of the vertices to turn into triangles
