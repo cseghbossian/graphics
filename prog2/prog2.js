@@ -491,7 +491,7 @@ function click(ev, gl, canvas) {
   else if(button == 2) {
     console.log('Right click at (' + x + ', ' + y + ')\n');
   }
-  
+  drawTree(gl, canvas, button, x, y);
 }
 
 function translateTree(type, x, y) {
@@ -519,4 +519,28 @@ function translateTree(type, x, y) {
     vv.push(type[i+2]);
   }
   return vv;
+}
+
+function drawTree(gl, canvas, type, x, y) {
+  var vv = translateTree(button, x, y);
+  //set color
+  for(var i = 0; i < vv.length; i+=6) {
+    //find start and end points for each branch
+    var x1 = vv[i];
+    var y1 = vv[i+1];
+    var z1 = vv[i+2];
+    var x2 = vv[i+3];
+    var y2 = vv[i+4];
+    var z2 = vv[i+5];
+
+    //set transformation matrices
+    var T = [];
+    var Rx = [];
+    var Ry = [];
+    var S = [];
+    findMatrices(x1, y1, z1, x2, y2, z2, T, Rx, Ry, S);
+
+    //pass vertices of general cylinder to shader
+    initVertexBuffers(gl, cylinderVerts);
+  }
 }
