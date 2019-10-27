@@ -66,15 +66,12 @@ function main() {
     return;
   }
 
-  // Get general array of points for each type of tree
-  // Later, x and y positions of click can be added to these points 
-  var lp = [];
-  var rp = [];
-  tree(0, 0, 0, 0, 0, 50/canvas.width, 5, lp);
-  tree(0, 0, 0, 0, 0, 40/canvas.width, 7, rp);
+  // Generate global tree/cylinder data 
+  generateCylinderData();
+  generateTreeData();
 
   // Register function (event handler) to be called on a mouse press
-  canvas.onmousedown = function(ev){ click(ev, gl, canvas, is_red, lp, rp); };
+  canvas.onmousedown = function(ev){ click(ev, gl, canvas, is_red, leftTree, rightTree); };
 
   // Specify the color for clearing <canvas>
   gl.clearColor(1.0, 1.0, 1.0, 1.0);
@@ -345,7 +342,7 @@ function generateCylinderData() {
   //index 0-71 are dodecagon vertices
   //index 72-143 are normal end points
   cylinderVerts = new Float32Array(ve);
-  
+
   cylinderLines = new Uint8Array([
     //wireframe
     0,12,12,13,  0,13,13,1,  1,13,13,14,  1,14,14,2, 2,14,14,15, 2,15,15,3,  3,15,15,16,  3,16,16,4, 
