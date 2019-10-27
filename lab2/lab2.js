@@ -69,7 +69,7 @@ function initVertexBuffers(gl) {
     0, 1, 0,  0, 1, 0,  0, 1, 0,  0, 1, 0,  
     0, 1, 0,  0, 1, 0,  0, 1, 0,  0, 1, 0
   ];
-  
+
   var colors = new Float32Array(c.concat(green));
 
   var polygons = new Uint8Array([       // Indices of the vertices to turn into triangles
@@ -260,22 +260,22 @@ function dodecagons() {
 * --------------
 * - Returns array of 24 points depicting a tapered cylinder
 * - Base has radius = 1 and is centered at (0,0,0)
-* - Top has radius = 0.5 and is centered at (0,0,10)
+* - Top has radius = 1/2 and is centered at (0,0,10)
 *
 */
-  d = []
+  var d = [];
   //base
   for(i = 0; i < 12; i++) {
-    x = Math.cos(i*(2*Math.PI/12))
-    y = Math.sin(i*(2*Math.PI/12))
-    z = 0 //for circle on the XY plane
+    var x = r*Math.cos(i*(2*Math.PI/12));
+    var y = r*Math.sin(i*(2*Math.PI/12));
+    var z = 0 ;
     d.push(x,y,z);
   }
   //top
   for(i = 0; i < 12; i++) {
-    x = 0.5*Math.cos(i*(2*Math.PI/12))
-    y = 0.5*Math.sin(i*(2*Math.PI/12))
-    z = 10 //for circle on the XY plane
+    var x = 0.5*r*Math.cos(i*(2*Math.PI/12));
+    var y = 0.5*r*Math.sin(i*(2*Math.PI/12));
+    var z = 10;
     d.push(x,y,z);
   }
   return d;

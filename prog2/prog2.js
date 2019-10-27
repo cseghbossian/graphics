@@ -183,19 +183,19 @@ function dodecagons() {
 * - Top has radius = 1/2 and is centered at (0,0,10)
 *
 */
-  d = []
+  var d = [];
   //base
   for(i = 0; i < 12; i++) {
-    x = r*Math.cos(i*(2*Math.PI/12))
-    y = r*Math.sin(i*(2*Math.PI/12))
-    z = 0 
+    var x = r*Math.cos(i*(2*Math.PI/12));
+    var y = r*Math.sin(i*(2*Math.PI/12));
+    var z = 0 ;
     d.push(x,y,z);
   }
   //top
   for(i = 0; i < 12; i++) {
-    x = 0.5*r*Math.cos(i*(2*Math.PI/12))
-    y = 0.5*r*Math.sin(i*(2*Math.PI/12))
-    z = l 
+    var x = 0.5*r*Math.cos(i*(2*Math.PI/12));
+    var y = 0.5*r*Math.sin(i*(2*Math.PI/12));
+    var z = 10;
     d.push(x,y,z);
   }
   return d;
