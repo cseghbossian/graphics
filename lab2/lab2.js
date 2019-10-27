@@ -266,15 +266,15 @@ function dodecagons() {
   var d = [];
   //base
   for(i = 0; i < 12; i++) {
-    var x = r*Math.cos(i*(2*Math.PI/12));
-    var y = r*Math.sin(i*(2*Math.PI/12));
+    var x = Math.cos(i*(2*Math.PI/12));
+    var y = Math.sin(i*(2*Math.PI/12));
     var z = 0 ;
     d.push(x,y,z);
   }
   //top
   for(i = 0; i < 12; i++) {
-    var x = 0.5*r*Math.cos(i*(2*Math.PI/12));
-    var y = 0.5*r*Math.sin(i*(2*Math.PI/12));
+    var x = 0.5*Math.cos(i*(2*Math.PI/12));
+    var y = 0.5*Math.sin(i*(2*Math.PI/12));
     var z = 10;
     d.push(x,y,z);
   }
