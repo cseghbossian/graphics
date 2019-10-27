@@ -405,10 +405,10 @@ function setView(gl) {
   gl.uniformMatrix4fv(u_MvpMatrix, false, mvpMatrix.elements);
 }
 
-function initVertexBuffers(gl, v) {
+function initVertexBuffers(gl, ve) {
   /* Parameters:
   * ------------
-  * v          :: Array of vertices to be inputted into buffer
+  * ve         :: Array of vertices to be inputted into buffer
   * gl         :: WebGLProgram containing shader program
   * 
   * Functionality:
@@ -421,8 +421,8 @@ function initVertexBuffers(gl, v) {
   * --------
   * Initializes vertex buffer by giving it a list of 3-d vertices to draw
   */
-    var vertices = new Float32Array(v);
-    var n = v.length/3;
+    var vertices = new Float32Array(ve);
+    var n = ve.length/3;
   
     // Create a buffer object
     var vertexBuffer = gl.createBuffer();
