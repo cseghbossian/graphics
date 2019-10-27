@@ -174,6 +174,24 @@ function findNormSegments(p) {
   return segments;
 }
 
+function findCross(x1,y1,z1,x2,y2,z2) {
+  /*
+  * Parameters:
+  * ------------
+  * x1, y1, z1         :: x, y, and z components of first vector
+  * x2, y2, z2         :: x, y, and z components of second vector
+  * 
+  * Functionality:
+  * --------------
+  * - Returns x, y, and z components of the cross product of two vectors
+  *
+  */
+    x = (y1*z2)-(z1*y2);
+    y = (z1*x2)-(x1*z2);
+    z = (x1*y2)-(y1*x2);
+    return [x,y,z];
+}
+
 function dodecagons() {
 /*
 * Functionality:
