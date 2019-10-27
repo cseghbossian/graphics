@@ -336,26 +336,26 @@ function reload() {
   setView(gl);
 
   // Register function (event handler) to be called on a mouse press
-  canvas.onmousedown = function(ev){ click(ev, canvas); };
+  canvas.onmousedown = function(ev){ click(ev, gl, canvas); };
 
-  // Set the vertex information
-  var b = initVertexBuffers(gl, cylinderVerts);
-  if (b < 0) {
-    console.log('Failed to set the vertex information');
-    return;
-  }
+  // // Set the vertex information
+  // var b = initVertexBuffers(gl, cylinderVerts);
+  // if (b < 0) {
+  //   console.log('Failed to set the vertex information');
+  //   return;
+  // }
 
-  // Clear color and depth buffer
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  // // Clear color and depth buffer
+  // gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-  // Set RENDER MODE
-  if(r%2==1) {
-    gl.drawElements(gl.LINES, b, gl.UNSIGNED_BYTE, 0);
-  }
-  else {
-    //flat shading
-    gl.drawElements(gl.TRIANGLES, b, gl.UNSIGNED_BYTE, 0);
-  }
+  // // Set RENDER MODE
+  // if(r%2==1) {
+  //   gl.drawElements(gl.LINES, b, gl.UNSIGNED_BYTE, 0);
+  // }
+  // else {
+  //   //flat shading
+  //   gl.drawElements(gl.TRIANGLES, b, gl.UNSIGNED_BYTE, 0);
+  // }
 
 }
 
@@ -471,7 +471,7 @@ function initVertexBuffers(gl, vv) {
     return n;
 }
 
-function click(ev, canvas) {
+function click(ev, gl, canvas) {
   var x = ev.clientX; // x coordinate of a click
   var y = ev.clientY; // y coordinate of a click
   var button = ev.button; // type of click
@@ -480,7 +480,7 @@ function click(ev, canvas) {
   x = ((x - rect.left) - canvas.width/2)/(canvas.width/2);
   y = (canvas.height/2 - (y - rect.top))/(canvas.height/2);
 
-  // Store the coordinates to rects array
+  // Store click data to clicks[]
   clicks.push(x); 
   clicks.push(y);
   clicks.push(button);
@@ -491,5 +491,32 @@ function click(ev, canvas) {
   else if(button == 2) {
     console.log('Right click at (' + x + ', ' + y + ')\n');
   }
-  reload();
+  
+}
+
+function translateTree(type, x, y) {
+/* Parameters:
+* ------------
+* type       :: int specifying type of tree (0 for left tree, 2 for right tree)
+* x          :: float specifying starting x-coordinate of tree 
+* y          :: float specifying starting y-coordinate of tree
+* 
+* Functionality:
+* --------------
+* - Translates x- and y-coordinates by the values given by x and y
+*
+* Outcome:
+* --------
+* returns array with floats representing x-, y-, and z-coordinates of vertices of translated tree(starting at (x,y,0))
+* Points are represented by three successive floats
+* Each pair of successive points represent start and end of a line segment
+* vv = [x,y,z, x,y,z,    x,y,z, x,y,z,    ... ]
+*/ 
+  var vv = [];
+  for(var i = 0; i < type.length; i +=3) {
+    vv.push(type[i] + x);
+    vv.push(type[i+1] + y);
+    vv.push(type[i+2]);
+  }
+  return vv;
 }
