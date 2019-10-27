@@ -43,9 +43,11 @@ function main() {
   generateCylinderData();
   generateTreeData();
 
+  var aa = new Float32Array(leftTree);
   console.log("cylinderLines", cylinderLines);
   console.log("cylinderVerts", cylinderVerts);
   console.log("cylinderTriangles", cylinderTriangles);
+  console.log("aa.length = ", aa.length);
   reload();
 }
 
@@ -486,7 +488,7 @@ function drawTree(gl, type, x, y) {
 
   // Draw each branch
   //dEBUG: CHANGE 6 BACK TO VV.LENGTH
-  for(var i = 0; i < 6; i+=6) {
+  for(var i = 0; i < vv.length; i+=6) {
     // Find start and end points for each branch
     var x1 = vv[i];
     var y1 = vv[i+1];
@@ -555,11 +557,9 @@ function initVertexBuffer(gl, data, num, type, attribute) {
     return false;
   }
 
-  var d = new Float32Array(data);
-
   // Write date into the buffer object
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-  gl.bufferData(gl.ARRAY_BUFFER, d, gl.STATIC_DRAW);
+  gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
 
   // Assign the buffer object to the attribute variable
   var a_attribute = gl.getAttribLocation(gl.program, attribute);
@@ -600,12 +600,10 @@ function initIndexBuffers(gl, vv) {
       console.log('Failed to create the buffer object');
       return -1;
     }
-
-    var u = new Uint8Array(vv);
   
     // Bind the buffer object to target and write vertices data into it
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, u, gl.STATIC_DRAW);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, vv, gl.STATIC_DRAW);
   
     return n;
   }
