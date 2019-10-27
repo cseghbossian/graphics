@@ -113,6 +113,67 @@ function tree(x,y,z,a,b,L,n,p) {
     return;
 }
 
+function findNormalComponents(p) { 
+/*
+* Parameters:
+* ------------
+* p           :: array holding x, y, and z coordinates of all 24 points (hard coded for 24 points
+* 
+* Functionality:
+* --------------
+* - Uses points in p to find two vectors on each plane (side of dodecagonal cylinder)
+* - Return list of x,y,z components of normals corresponding to each vertex in p
+*
+*/
+  var norms = [];
+  for(var i = 0; i < 36; i += 6) {
+    //vector1 from point0 (i,i+1,i+2) to point1 (i+3,i+4,i+5)
+    var x1 = p[i+3] - p[i];
+    var y1 = p[i+4] - p[i+1];
+    var z1 = p[i+5] - p[i+2];
+    //vector2 from point0 (i,i+1,i+2) to point13 (i+39,i+40,i+41)
+    var x2 = p[i+39] - p[i];
+    var y2 = p[i+40] - p[i+1];
+    var z2 = p[i+41] - p[i+2];
+    //make normals for first dodecagon
+    norms = norms.concat(findCross(x1,y1,z1,x2,y2,z2)); //point i
+    norms = norms.concat(findCross(x1,y1,z1,x2,y2,z2)); // point i+1
+   
+  }
+  //concat array with itself to have normals for both dodecagons
+  return norms.concat(norms.slice(0)); //return list of x,y,z components of normals corresponding to each vertex
+}
+
+function findNormSegments(p) {
+/*
+* Parameters:
+* ------------
+* p           :: array holding x, y, and z coordinates of all 24 points
+* 
+* Functionality:
+* --------------
+* - Calls findNormalComponents(...) to find x, y, and z components of each normal
+* - Returns array of end points for each norm vector
+* - Starting points of each normal are the points in p
+*
+*/
+  //find x,y,z components of normals
+  var comps = findNormalComponents(p);
+  var segments = [];
+  var ex,ey,ez, len;
+  for(var i = 0; i < p.length; i+=3) {
+    //calculate length of normal 
+    len = Math.sqrt(Math.pow(comps[i],2)+Math.pow(comps[i+1],2)+Math.pow(comps[i+2],2));
+    //calculate normalized end point
+    ex = p[i]+comps[i]/len;
+    ey = p[i+1]+comps[i+1]/len;
+    ez = p[i+2]+comps[i+2]/len;
+    //push normalized end point
+    segments.push(ex,ey,ez);
+  }
+  return segments;
+}
+
 function dodecagons() {
 /*
 * Functionality:
@@ -234,39 +295,25 @@ function toggleProjection() {
   }
 
 function reload() {
-/*
-* Functionality:
-* --------------
-* - Retrieves <canvas> element from driver.html
-* - Retrieves and verifies rendering context for WebGL
-* - Initializes shaders
-* - Initializes vertex buffers by calling initVertexBuffer(...)
-* - Fetches and verifies storage locations of each variable in shader programs
-* - Sets viewing point and render mode depending on counter values
-* - Calls draw function 
-*
-* Outcome:
-* --------
-* Sets proper parameters and draws cylinder upon each toggle of switch(es)
-*/
-var canvas = document.getElementById('webgl');
+  var canvas = document.getElementById('webgl');
 
-// Get the rendering context for WebGL
-var gl = getWebGLContext(canvas);
-if (!gl) {
-  console.log('Failed to get the rendering context for WebGL');
-  return;
-}
+  // Get the rendering context for WebGL
+  var gl = getWebGLContext(canvas);
+  if (!gl) {
+    console.log('Failed to get the rendering context for WebGL');
+    return;
+  }
 
-// Initialize shaders
-if (!initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE)) {
-  console.log('Failed to intialize shaders.');
-  return;
-}
+  // Initialize shaders
+  if (!initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE)) {
+    console.log('Failed to intialize shaders.');
+    return;
+  }
   // Set the clear color and enable the depth test
   gl.clearColor(.3, 0, .25, 0.4);
   gl.enable(gl.DEPTH_TEST);
 
+  //set VIEW and PROJECTION MODE
   setView(gl);
 
   // Set the vertex information
@@ -275,9 +322,6 @@ if (!initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE)) {
     console.log('Failed to set the vertex information');
     return;
   }
-
-  // Register function (event handler) to be called on a mouse press
-  canvas.onmousedown = function(ev){ click(ev, gl, canvas, is_red, leftTree, rightTree); };
 
   // Clear color and depth buffer
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -360,3 +404,47 @@ function setView(gl) {
   // Pass the model view projection matrix to u_MvpMatrix
   gl.uniformMatrix4fv(u_MvpMatrix, false, mvpMatrix.elements);
 }
+
+function initVertexBuffers(gl, v) {
+  /* Parameters:
+  * ------------
+  * v          :: Array of vertices to be inputted into buffer
+  * gl         :: WebGLProgram containing shader program
+  * 
+  * Functionality:
+  * --------------
+  * - Creates a buffer object
+  * - Binds the buffer object to target and writes vertices data into it
+  * - Assigns the buffer object to a_Position variable
+  *
+  * Outcome:
+  * --------
+  * Initializes vertex buffer by giving it a list of 3-d vertices to draw
+  */
+    var vertices = new Float32Array(v);
+    var n = v.length/3;
+  
+    // Create a buffer object
+    var vertexBuffer = gl.createBuffer();
+    if (!vertexBuffer) {
+      console.log('Failed to create the buffer object');
+      return -1;
+    }
+  
+    // Bind the buffer object to target and write vertices data into it
+    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+  
+    var a_Position = gl.getAttribLocation(gl.program, 'a_Position');
+    if (a_Position < 0) {
+      console.log('Failed to get the storage location of a_Position');
+      return -1;
+    }
+    // Assign the buffer object to a_Position variable
+    gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, 0, 0);
+  
+    // Enable the assignment to a_Position variable
+    gl.enableVertexAttribArray(a_Position);
+  
+    return n;
+  }
