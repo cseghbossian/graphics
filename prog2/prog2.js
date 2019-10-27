@@ -23,6 +23,7 @@ var FSHADER_SOURCE =
   '}\n';
 
 //GLOBAL VARIABLES
+var WIDTH = 600;              // canvas.width found in driver.html
 var r = 0;                    // determines render mode
 var v = 0;                    // determines view mode
 var n = 0;                    // determines if normals show
@@ -338,7 +339,7 @@ function reload() {
   canvas.onmousedown = function(ev){ click(ev, canvas); };
 
   // Set the vertex information
-  var b = initVertexBuffers(gl);
+  var b = initVertexBuffers(gl, cylinderVerts);
   if (b < 0) {
     console.log('Failed to set the vertex information');
     return;
@@ -360,8 +361,8 @@ function reload() {
 
 function generateTreeData() {
   //generate tree data
-  tree(0, 0, 0, 0, 0, 50/canvas.width, 5, leftTree);
-  tree(0, 0, 0, 0, 0, 40/canvas.width, 7, rightTree);
+  tree(0, 0, 0, 0, 0, 50/WIDTH, 5, leftTree);
+  tree(0, 0, 0, 0, 0, 40/WIDTH, 7, rightTree);
 }
 
 function generateCylinderData() {
