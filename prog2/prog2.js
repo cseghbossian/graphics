@@ -38,13 +38,6 @@ var cylinderNorms = [];       // indices for normal vectors
 var clicks = [];              // click data (x-coord, y-coord, type)
 
 function main() {
-  //debugging area~~~~~~~~~~~~~
-  var Rx = new Matrix4();
-  var Ry = new Matrix4();
-  var T = new Matrix4();
-  var S = new Matrix4();
-  findMatrices(3,5,8,2,2,40, T, Rx, Ry, S);
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
   // Generate global tree/cylinder data 
   generateCylinderData();
@@ -335,6 +328,10 @@ function reload() {
   //set VIEW and PROJECTION MODE
   setView(gl);
 
+  // shouLD THI S GO HERE?
+  // Clear color and depth buffer
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
   // Register function (event handler) to be called on a mouse press
   canvas.onmousedown = function(ev){ click(ev, gl, canvas); };
 
@@ -342,8 +339,8 @@ function reload() {
 
 function generateTreeData() {
   //generate tree data
-  tree(0, 0, 0, 0, 0, 50/WIDTH, 5, leftTree);
-  tree(0, 0, 0, 0, 0, 40/WIDTH, 7, rightTree);
+  tree(0, 0, 0, 0, 0, 50/WIDTH, 2, leftTree);
+  tree(0, 0, 0, 0, 0, 40/WIDTH, 3, rightTree);
 }
 
 function generateCylinderData() {
@@ -423,10 +420,10 @@ function click(ev, gl, canvas) {
   clicks.push(button);
 
   if(button==0) {
-    console.log('Left click at (' + x + ', ' + y + ')\n');
+    console.log('Left click at (' + x + ', ' + y + ')');
   }
   else if(button == 2) {
-    console.log('Right click at (' + x + ', ' + y + ')\n');
+    console.log('Right click at (' + x + ', ' + y + ')');
   }
   drawTree(gl, button, x, y);
 }
@@ -482,7 +479,8 @@ function drawTree(gl, type, x, y) {
   console.log("in drawTree, vv.length = ", vv.length);
 
   // Draw each branch
-  for(var i = 0; i < vv.length; i+=6) {
+  //dEBUG: CHANGE 6 BACK TO VV.LENGTH
+  for(var i = 0; i < 6; i+=6) {
     // Find start and end points for each branch
     var x1 = vv[i];
     var y1 = vv[i+1];
@@ -550,20 +548,26 @@ function initVertexBuffer(gl, data, num, type, attribute) {
     console.log('Failed to create the buffer object');
     return false;
   }
+
+  var d = new Float32Array(data);
+
   // Write date into the buffer object
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-  gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+  gl.bufferData(gl.ARRAY_BUFFER, d, gl.STATIC_DRAW);
+
   // Assign the buffer object to the attribute variable
   var a_attribute = gl.getAttribLocation(gl.program, attribute);
   if (a_attribute < 0) {
     console.log('Failed to get the storage location of ' + attribute);
-    return false;
+    return -1;
   }
+
   gl.vertexAttribPointer(a_attribute, num, type, false, 0, 0);
+
   // Enable the assignment of the buffer object to the attribute variable
   gl.enableVertexAttribArray(a_attribute);
 
-  return true;
+  return data.length/3;
 }
 
 function initIndexBuffers(gl, vv) {
@@ -590,10 +594,12 @@ function initIndexBuffers(gl, vv) {
       console.log('Failed to create the buffer object');
       return -1;
     }
+
+    var u = new Uint8Array(vv);
   
     // Bind the buffer object to target and write vertices data into it
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, vv, gl.STATIC_DRAW);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, u, gl.STATIC_DRAW);
   
     return n;
   }
