@@ -292,7 +292,7 @@ function toggleProjection() {
 * Page reloads with normals switched between hidden and showing
 */
   p++;
-  }
+}
 
 function reload() {
   var canvas = document.getElementById('webgl');
@@ -315,6 +315,9 @@ function reload() {
 
   //set VIEW and PROJECTION MODE
   setView(gl);
+
+  // Register function (event handler) to be called on a mouse press
+  canvas.onmousedown = function(ev){ click(ev, canvas); };
 
   // Set the vertex information
   var b = initVertexBuffers(gl);
@@ -405,10 +408,10 @@ function setView(gl) {
   gl.uniformMatrix4fv(u_MvpMatrix, false, mvpMatrix.elements);
 }
 
-function initVertexBuffers(gl, ve) {
+function initVertexBuffers(gl, vv) {
   /* Parameters:
   * ------------
-  * ve         :: Array of vertices to be inputted into buffer
+  * vv         :: Array of vertices to be inputted into buffer
   * gl         :: WebGLProgram containing shader program
   * 
   * Functionality:
@@ -421,8 +424,8 @@ function initVertexBuffers(gl, ve) {
   * --------
   * Initializes vertex buffer by giving it a list of 3-d vertices to draw
   */
-    var vertices = new Float32Array(ve);
-    var n = ve.length/3;
+    var vertices = new Float32Array(vv);
+    var n = vv.length/3;
   
     // Create a buffer object
     var vertexBuffer = gl.createBuffer();
@@ -447,4 +450,27 @@ function initVertexBuffers(gl, ve) {
     gl.enableVertexAttribArray(a_Position);
   
     return n;
+}
+
+function click(ev, canvas) {
+  var x = ev.clientX; // x coordinate of a click
+  var y = ev.clientY; // y coordinate of a click
+  var button = ev.button; // type of click
+  var rect = ev.target.getBoundingClientRect() ;
+
+  x = ((x - rect.left) - canvas.width/2)/(canvas.width/2);
+  y = (canvas.height/2 - (y - rect.top))/(canvas.height/2);
+
+  // Store the coordinates to rects array
+  clicks.push(x); 
+  clicks.push(y);
+  clicks.push(button);
+
+  if(button==0) {
+    console.log('Left click at (' + x + ', ' + y + ')\n');
   }
+  else if(button == 2) {
+    console.log('Right click at (' + x + ', ' + y + ')\n');
+  }
+  reload();
+}
