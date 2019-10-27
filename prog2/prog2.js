@@ -26,6 +26,7 @@ var FSHADER_SOURCE =
 var r = 0;                    // determines render mode
 var v = 0;                    // determines view mode
 var n = 0;                    // determines if normals show
+var p = 0;                    // determines projection mode
 
 var leftTree = [];            // line segments for r4 tree centered at (0,0,0)
 var rightTree = [];           // line segments for r6 tree centered at (0,0,0)
@@ -44,40 +45,11 @@ function main() {
   findMatrices(3,5,8,2,2,40, T, Rx, Ry, S);
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-  var canvas = document.getElementById('webgl');
-
-  // Get the rendering context for WebGL
-  var gl = getWebGLContext(canvas);
-  if (!gl) {
-    console.log('Failed to get the rendering context for WebGL');
-    return;
-  }
-
-  // Initialize shaders
-  if (!initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE)) {
-    console.log('Failed to intialize shaders.');
-    return;
-  }
-
-  // Get the storage location of a_Position and u_FragColor
-  var is_red = gl.getUniformLocation(gl.program, 'is_red');
-  if (is_red < 0) {
-    console.log('Failed to get the storage location of is_red');
-    return;
-  }
-
   // Generate global tree/cylinder data 
   generateCylinderData();
   generateTreeData();
 
-  // Register function (event handler) to be called on a mouse press
-  canvas.onmousedown = function(ev){ click(ev, gl, canvas, is_red, leftTree, rightTree); };
-
-  // Specify the color for clearing <canvas>
-  gl.clearColor(1.0, 1.0, 1.0, 1.0);
-
-  // Clear <canvas>
-  gl.clear(gl.COLOR_BUFFER_BIT);
+  reload();
 }
 
 function tree(x,y,z,a,b,L,n,p) {
@@ -247,6 +219,20 @@ function toggleNormals() {
   reload();
 }
 
+function toggleProjection() {
+/*
+* Functionality:
+* --------------
+* - Updates normal counter
+* - Switches to shaded mode if normals toggled on
+*
+* Outcome:
+* --------
+* Page reloads with normals switched between hidden and showing
+*/
+  p++;
+  }
+
 function reload() {
 /*
 * Functionality:
@@ -263,48 +249,25 @@ function reload() {
 * --------
 * Sets proper parameters and draws cylinder upon each toggle of switch(es)
 */
-  // Retrieve <canvas> element
-  var canvas = document.getElementById('webgl');
+var canvas = document.getElementById('webgl');
 
-  // Get the rendering context for WebGL
-  var gl = getWebGLContext(canvas);
-  if (!gl) {
-    console.log('Failed to get the rendering context for WebGL');
-    return;
-  }
+// Get the rendering context for WebGL
+var gl = getWebGLContext(canvas);
+if (!gl) {
+  console.log('Failed to get the rendering context for WebGL');
+  return;
+}
 
-  // Initialize shaders
-  if (!initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE)) {
-    console.log('Failed to intialize shaders.');
-    return;
-  }
-
+// Initialize shaders
+if (!initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE)) {
+  console.log('Failed to intialize shaders.');
+  return;
+}
   // Set the clear color and enable the depth test
   gl.clearColor(.3, 0, .25, 0.4);
   gl.enable(gl.DEPTH_TEST);
 
-  // Get the storage location of u_MvpMatrix
-  var u_MvpMatrix = gl.getUniformLocation(gl.program, 'u_MvpMatrix');
-  if (!u_MvpMatrix) {
-    console.log('Failed to get the storage location of u_MvpMatrix');
-    return;
-  }
-
-  // Set the eye point and the viewing volume
-  var mvpMatrix = new Matrix4();
-  //(0,0,∞)
-  if(v%2==1) {
-    mvpMatrix.setOrtho(-2,2,-2,2,0,13);
-    mvpMatrix.lookAt(0, 0, 12.5, 0, 0, 0, 0, 1, 0);
-  }
-  //(0, -∞, 75)
-  else {
-    mvpMatrix.setPerspective(30, 1, 1, 100);
-    mvpMatrix.lookAt(0, -40 , 20, 0, 0, 0, 0, 1, 0);
-  }
-
-  // Pass the model view projection matrix to u_MvpMatrix
-  gl.uniformMatrix4fv(u_MvpMatrix, false, mvpMatrix.elements);
+  setView(gl);
 
   // Set the vertex information
   var b = initVertexBuffers(gl);
@@ -313,6 +276,9 @@ function reload() {
     return;
   }
 
+  // Register function (event handler) to be called on a mouse press
+  canvas.onmousedown = function(ev){ click(ev, gl, canvas, is_red, leftTree, rightTree); };
+
   // Clear color and depth buffer
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
@@ -320,8 +286,8 @@ function reload() {
   if(r%2==1) {
     gl.drawElements(gl.LINES, b, gl.UNSIGNED_BYTE, 0);
   }
-  //flat shading
   else {
+    //flat shading
     gl.drawElements(gl.TRIANGLES, b, gl.UNSIGNED_BYTE, 0);
   }
 
@@ -368,4 +334,29 @@ function generateCylinderData() {
     0,24, 1,25, 2,26, 3,27, 4,28, 5,29, 6,30, 7,31, 8,32, 9,33, 10,34, 11,35, 12,36,
     13,37, 14,38, 15,39, 16,40, 17,41, 18,42, 19,43, 20,44, 21,45, 22,46, 23,47
   ]);
+}
+
+function setView(gl) {
+  // Get the storage location of u_MvpMatrix
+  var u_MvpMatrix = gl.getUniformLocation(gl.program, 'u_MvpMatrix');
+  if (!u_MvpMatrix) {
+    console.log('Failed to get the storage location of u_MvpMatrix');
+    return;
+  }
+
+  // Set the eye point and the viewing volume
+  var mvpMatrix = new Matrix4();
+  //(0,0,∞)
+  if(v%2==1) {
+    mvpMatrix.setOrtho(-2,2,-2,2,0,13);
+    mvpMatrix.lookAt(0, 0, 12.5, 0, 0, 0, 0, 1, 0);
+  }
+  //(0, -∞, 75)
+  else {
+    mvpMatrix.setPerspective(30, 1, 1, 100);
+    mvpMatrix.lookAt(0, -40 , 20, 0, 0, 0, 0, 1, 0);
+  }
+
+  // Pass the model view projection matrix to u_MvpMatrix
+  gl.uniformMatrix4fv(u_MvpMatrix, false, mvpMatrix.elements);
 }
