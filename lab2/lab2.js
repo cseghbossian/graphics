@@ -40,7 +40,7 @@ function initVertexBuffers(gl) {
 * --------------
 * - Calculates all points by calling dodecagons(...) and findNormSegments(...)
 * - Calculates colors of each point by calling findColors(...)
-* - Initializes array buffers by calling initArrayBuffers
+* - Initializes array buffers by calling initArrayBuffers(...)
 * - Creates index arrays for polygons, lines, and norms
 * - Creates buffer objects for indices, vertices, and colors and fills them
 * - Calls draw functions with appropriate toggle settings for flat shading, wireframes, and normals
@@ -152,7 +152,7 @@ function initArrayBuffer(gl, data, num, type, attribute) {
 *
 * Outcome:
 * --------
-* Initializes vertex and array buffers with appropriate toggle settings
+* Initializes vertex buffer with appropriate toggle settings
 */
   var buffer = gl.createBuffer();   // Create a buffer object
   if (!buffer) {
