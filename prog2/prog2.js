@@ -5,10 +5,17 @@
 var VSHADER_SOURCE =
   'attribute vec4 a_Position;\n' +
   'attribute vec4 a_Color;\n' +
-  'uniform mat4 u_MvpMatrix;\n' +
+  'uniform mat4 u_MvpMatrix;\n' + //view matrix
+  'uniform mat4 u_RxMatrix;\n' + //Rx matrix
+  'uniform mat4 u_RyMatrix;\n' + //Ry matrix
+  'uniform mat4 u_TMatrix;\n' + //T matrix
+  'uniform mat4 u_SMatrix;\n' + //S matrix
   'varying vec4 v_Color;\n' +
   'void main() {\n' +
-  '  gl_Position = u_MvpMatrix * a_Position;\n' +
+  '  gl_Position = u_RxMatrix * a_Position;\n' +
+  '  gl_Position = u_RyMatrix * gl_Position;\n' +
+  '  gl_Position = u_SMatrix * gl_Position;\n' +
+  '  gl_Position = u_TMatrix * gl_Position;\n' +
   '  v_Color = a_Color;\n' +
   '}\n';
 
@@ -43,11 +50,6 @@ function main() {
   generateCylinderData();
   generateTreeData();
 
-  var aa = new Float32Array(leftTree);
-  console.log("cylinderLines", cylinderLines);
-  console.log("cylinderVerts", cylinderVerts);
-  console.log("cylinderTriangles", cylinderTriangles);
-  console.log("aa.length = ", aa.length);
   reload();
 }
 
@@ -215,7 +217,6 @@ function dodecagons() {
     var z = 10;
     d.push(x,y,z);
   }
-  console.log("in dodecagons d=", d);
   return d;
 }
 
@@ -317,6 +318,9 @@ function reload() {
 
   // Get the rendering context for WebGL
   var gl = canvas.getContext('webgl', {preserveDrawingBuffer:true});
+  //var gl = getWebGLContext(canvas);
+  //gl needs to be 
+
   if (!gl) {
     console.log('Failed to get the rendering context for WebGL');
     return;
@@ -352,11 +356,9 @@ function generateTreeData() {
 function generateCylinderData() {
   //generate cylinder data
   var ve = dodecagons();
-  console.log("ve = ", ve); 
   var nn = findNormSegments(ve);
   ve = ve.concat(nn);
 
-  console.log("ve = ", ve);
   //index 0-71 are dodecagon vertices
   //index 72-143 are normal end points
   cylinderVerts = new Float32Array(ve);
@@ -484,10 +486,7 @@ function drawTree(gl, type, x, y) {
   if (!initVertexBuffer(gl, cylinderVerts, 3, gl.FLOAT, 'a_Position'))
     return -1;
   
-  console.log("in drawTree, vv.length = ", vv.length);
-
   // Draw each branch
-  //dEBUG: CHANGE 6 BACK TO VV.LENGTH
   for(var i = 0; i < vv.length; i+=6) {
     // Find start and end points for each branch
     var x1 = vv[i];
@@ -498,40 +497,32 @@ function drawTree(gl, type, x, y) {
     var z2 = vv[i+5];
 
     // Set transformation matrices
-    var Rx = new Matrix4();
-    var Ry = new Matrix4();
-    var T = new Matrix4();
-    var S = new Matrix4();
+    var Rx = new Matrix4;
+    var Ry = new Matrix4;
+    var T = new Matrix4;
+    var S = new Matrix4;
+    
+    console.log(T);
     findMatrices(x1, y1, z1, x2, y2, z2, T, Rx, Ry, S);
-
-    // Pass matrices to shader INCOMPLETE
+    console.log(T);
+    // Pass matrices to shader 
+    loadMatrices(gl, Rx, Ry, T, S);
 
     // Set RENDER mode and draw
     if(r%2==0){ // flat shading
       var b = initIndexBuffers(gl, cylinderTriangles);
-      console.log("DEBUG b = ", b);
-
       if(b<=0) 
         return -1;
       
       gl.drawElements(gl.TRIANGLES, b, gl.UNSIGNED_BYTE, 0);
-      console.log("DEBUG in drawTree drawing");
     }
     else { // wireframe
       var b = initIndexBuffers(gl, cylinderLines);
-
-      console.log("DEBUG b = ", b);
-
       if(b<=0) 
         return -1;
 
       gl.drawElements(gl.LINES, b, gl.UNSIGNED_BYTE, 0);
-      console.log("DEBUG in drawTree drawing");
     }
-    
-
-
-  
   }
 }
 
@@ -606,4 +597,40 @@ function initIndexBuffers(gl, vv) {
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, vv, gl.STATIC_DRAW);
   
     return n;
+}
+
+function loadMatrices(gl, Rx, Ry, T, S) {
+  // Pass the Rx matrix to the vertex shader
+  var u_RxMatrix = gl.getUniformLocation(gl.program, 'u_RxMatrix');
+  console.log("DEBUG u_RxMatrix =", u_RxMatrix);
+  if (!u_RxMatrix) {
+    console.log('Failed to get the storage location of u_RxMatrix');
+    return;
   }
+  gl.uniformMatrix4fv(u_RxMatrix, false, Rx.elements);
+
+  // Pass the Ry matrix to the vertex shader
+  var u_RyMatrix = gl.getUniformLocation(gl.program, 'u_RyMatrix');
+  if (!u_RyMatrix) {
+    console.log('Failed to get the storage location of u_RyMatrix');
+    return;
+  }
+  gl.uniformMatrix4fv(u_RyMatrix, false, Ry.elements);
+
+  // Pass the Rx matrix to the vertex shader
+  var u_TMatrix = gl.getUniformLocation(gl.program, 'u_TMatrix');
+  if (!u_TMatrix) {
+    console.log('Failed to get the storage location of u_TMatrix');
+    return;
+  }
+  gl.uniformMatrix4fv(u_TMatrix, false, T.elements);
+
+// Pass the S matrix to the vertex shader
+var u_SMatrix = gl.getUniformLocation(gl.program, 'u_SMatrix');
+if (!u_SMatrix) {
+  console.log('Failed to get the storage location of u_SMatrix');
+  return;
+}
+gl.uniformMatrix4fv(u_SMatrix, false, S.elements);
+
+}
