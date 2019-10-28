@@ -12,10 +12,11 @@ var VSHADER_SOURCE =
   'uniform mat4 u_SMatrix;\n' + //S matrix
   'varying vec4 v_Color;\n' +
   'void main() {\n' +
-  '  gl_Position = u_RxMatrix * a_Position;\n' +
+  '  gl_Position = u_SMatrix * a_Position;\n' +
   '  gl_Position = u_RyMatrix * gl_Position;\n' +
-  '  gl_Position = u_SMatrix * gl_Position;\n' +
+  '  gl_Position = u_RxMatrix * gl_Position;\n' +
   '  gl_Position = u_TMatrix * gl_Position;\n' +
+  '  gl_Position = u_MvpMatrix * gl_Position;\n' +
   '  v_Color = a_Color;\n' +
   '}\n';
 
@@ -26,11 +27,13 @@ var FSHADER_SOURCE =
   '#endif\n' +
   'varying vec4 v_Color;\n' +
   'void main() {\n' +
-  '  gl_FragColor = vec4 (1,1,1,1);\n' +
+  '  gl_FragColor = vec4 (0,0,0,1);\n' +
   '}\n';
 
 //GLOBAL VARIABLES
 var WIDTH = 600;              // canvas.width found in driver.html
+var FIFTY = 50/WIDTH;
+var FORTY = 40/WIDTH;
 var r = 0;                    // determines render mode
 var v = 0;                    // determines view mode
 var n = 0;                    // determines if normals show
@@ -222,7 +225,7 @@ function dodecagons() {
 
 function findMatrices(x1, y1, z1, x2, y2, z2, T, Rx, Ry, S) {
   //set translation matrix
-  T.setTranslate(-x1,-y1,-z1);
+  T.setTranslate(x1,y1,z1);
 
   //calculate translated end point
   var p2x = x2-x1;
@@ -240,10 +243,9 @@ function findMatrices(x1, y1, z1, x2, y2, z2, T, Rx, Ry, S) {
   //set Ry to rotate -beta radians around y-axis
   Ry.setRotate(-beta,0,1,0);
 
-  //set S to scale
-  var scale = length/10;
-
-  S.setScale(scale,scale,scale);
+  //set S to length
+  //DEBUG: SHOULD I SCALE BY 
+  S.setScale(length,length,length);
   
   //taking inverse makes no difference but leaving this here for principal
   T.invert; 
@@ -349,8 +351,8 @@ function reload() {
 
 function generateTreeData() {
   //generate tree data
-  tree(0, 0, 0, 0, 0, 50/WIDTH, 2, leftTree);
-  tree(0, 0, 0, 0, 0, 40/WIDTH, 3, rightTree);
+  tree(0, 0, 0, 0, 0, FIFTY, 4, leftTree);
+  tree(0, 0, 0, 0, 0, FORTY, 6, rightTree);
 }
 
 function generateCylinderData() {
@@ -501,10 +503,8 @@ function drawTree(gl, type, x, y) {
     var Ry = new Matrix4;
     var T = new Matrix4;
     var S = new Matrix4;
-    
-    console.log(T);
     findMatrices(x1, y1, z1, x2, y2, z2, T, Rx, Ry, S);
-    console.log(T);
+    
     // Pass matrices to shader 
     loadMatrices(gl, Rx, Ry, T, S);
 
@@ -602,7 +602,6 @@ function initIndexBuffers(gl, vv) {
 function loadMatrices(gl, Rx, Ry, T, S) {
   // Pass the Rx matrix to the vertex shader
   var u_RxMatrix = gl.getUniformLocation(gl.program, 'u_RxMatrix');
-  console.log("DEBUG u_RxMatrix =", u_RxMatrix);
   if (!u_RxMatrix) {
     console.log('Failed to get the storage location of u_RxMatrix');
     return;
@@ -617,7 +616,7 @@ function loadMatrices(gl, Rx, Ry, T, S) {
   }
   gl.uniformMatrix4fv(u_RyMatrix, false, Ry.elements);
 
-  // Pass the Rx matrix to the vertex shader
+  // Pass the T matrix to the vertex shader
   var u_TMatrix = gl.getUniformLocation(gl.program, 'u_TMatrix');
   if (!u_TMatrix) {
     console.log('Failed to get the storage location of u_TMatrix');
@@ -625,12 +624,12 @@ function loadMatrices(gl, Rx, Ry, T, S) {
   }
   gl.uniformMatrix4fv(u_TMatrix, false, T.elements);
 
-// Pass the S matrix to the vertex shader
-var u_SMatrix = gl.getUniformLocation(gl.program, 'u_SMatrix');
-if (!u_SMatrix) {
-  console.log('Failed to get the storage location of u_SMatrix');
-  return;
-}
-gl.uniformMatrix4fv(u_SMatrix, false, S.elements);
+  // Pass the S matrix to the vertex shader
+  var u_SMatrix = gl.getUniformLocation(gl.program, 'u_SMatrix');
+  if (!u_SMatrix) {
+    console.log('Failed to get the storage location of u_SMatrix');
+    return;
+  }
+  gl.uniformMatrix4fv(u_SMatrix, false, S.elements);
 
 }
