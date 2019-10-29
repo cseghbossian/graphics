@@ -56,7 +56,6 @@ function main() {
   generateCylinderData();
   generateTreeData();
 
-  console.log("DEBUG leftTree=", leftTree)
   reload();
 }
 
@@ -224,7 +223,8 @@ function dodecagons() {
     var z = 10;
     d.push(x,y,z);
   }
-  console.log("DEBUG:",d);
+  console.log("dodecagons", d);
+
   return d;
 }
 
@@ -257,7 +257,7 @@ function findMatrices(x1, y1, z1, x2, y2, z2, T, Rx, Ry, S) {
 
   //set S to length
   //DEBUG: SHOULD I SCALE BY smth else?
-  S.setScale(length/2,length/2,length/2);
+  S.setScale(length*2,length*2,length*2);
   
   //taking inverse makes no difference but leaving this here for principal
   T.invert; 
@@ -331,7 +331,7 @@ function reload() {
   var canvas = document.getElementById('webgl');
 
   // Get the rendering context for WebGL
-  var gl = canvas.getContext('webgl', {preserveDrawingBuffer:true});
+  var gl = canvas.getContext('webgl', {preserveDrawingBuffer:false});
   //var gl = getWebGLContext(canvas);
   //gl needs to be 
 
@@ -384,9 +384,12 @@ function generateCylinderData() {
     4,16,16,17,  4,17,17,5,  5,17,17,18,  5,18,18,6,  6,18,18,19,  6,19,19,7,  7,19,19,20,  7,20,20,8,
     8,20,20,21,  8,21,21,9,  9,21,21,22,  9,22,22,10,  10,22,22,23,  10,23,23,11,  11,23,23,12,  11,12,12,0,
     0,1,1,2,  2,3,3,4,  4,5,5,6,  6,7,7,8,  8,9,9,10,  10,11,11,0,
+    
   ]);
 
   cylinderTriangles = new Uint8Array([       // Indices of the vertices to turn into triangles
+    //4,16,17,  4,17,5,  5,17,18,  5,18,6,  6,18,19,  6,19,7,  7,19,20,  7,20,8,
+
     0,12,13,  0,13,1,  1,13,14,  1,14,2,  2,14,15,  2,15,3,  3,15,16,  3,16,4,  
     4,16,17,  4,17,5,  5,17,18,  5,18,6,  6,18,19,  6,19,7,  7,19,20,  7,20,8,
     8,20,21,  8,21,9,  9,21,22,  9,22,10,  10,22,23,  10,23,11,  11,23,12,  11,12,0
@@ -497,12 +500,14 @@ function drawTree(gl, type, x, y) {
   var vv = translateTree(type, x, y);
   // Set color INCOMPLETE
   
-  // Initialize vertex buffer with cylinder vertices
-  if (!initVertexBuffer(gl, cylinderVerts, 3, gl.FLOAT, 'a_Position'))
-    return -1;
+
   
   // Draw each branch
   for(var i = 0; i < vv.length; i+=6) {
+    // Initialize vertex buffer with cylinder vertices
+    if (!initVertexBuffer(gl, cylinderVerts, 3, gl.FLOAT, 'a_Position'))
+      return -1;
+      
     console.log("drawing branch");
     // Find start and end points for each branch
     var x1 = vv[i];
@@ -518,7 +523,7 @@ function drawTree(gl, type, x, y) {
     var T = new Matrix4;
     var S = new Matrix4;
     findMatrices(x1, y1, z1, x2, y2, z2, T, Rx, Ry, S);
-    console.log("508 Rx =", Rx);
+    //console.log("508 Rx =", Rx);
     // Pass matrices to shader 
     loadMatrices(gl, Rx, Ry, T, S);
 
@@ -529,15 +534,15 @@ function drawTree(gl, type, x, y) {
       if(b<=0) 
         return -1;
       
-      gl.drawElements(gl.LINES, b, gl.UNSIGNED_BYTE, 0);
+      gl.drawElements(gl.LINES, b*3, gl.UNSIGNED_BYTE, 0);
     }
     else { // wireframe
-      
+      console.log("534 DEBUG cylinderTriangles",cylinderTriangles)
       var b = initIndexBuffers(gl, cylinderTriangles);
       if(b<=0) 
         return -1;
 
-      gl.drawElements(gl.TRIANGLES, b, gl.UNSIGNED_BYTE, 0);
+      gl.drawElements(gl.TRIANGLES, b*3, gl.UNSIGNED_BYTE, 0);
     }
   }
 }
