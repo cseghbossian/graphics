@@ -18,7 +18,7 @@ var VSHADER_SOURCE =
   '  gl_Position = u_RyMatrix * gl_Position;\n' +
   '  gl_Position = u_TMatrix * gl_Position;\n' +
   '  gl_Position = u_MvpMatrix * gl_Position;\n' +
-  '  v_Color = vec4 (0,0,0,1);\n' +
+  '  v_Color = a_Color;\n' +
   '}\n';
 
 // Fragment shader program
@@ -371,8 +371,8 @@ function reload() {
 
 function generateTreeData() {
   //generate tree data
-  tree(0, 0, 0, 0, 0, FIFTY, 1, leftTree);
-  tree(0, 0, 0, 0, 0, FORTY, 4, rightTree);
+  tree(0, 0, 0, 0, 0, FIFTY, 4, leftTree);
+  tree(0, 0, 0, 0, 0, FORTY, 6, rightTree);
 }
 
 function generateCylinderData() {
@@ -516,6 +516,10 @@ function drawTree(gl, type, x, y) {
   for(var i = 0; i < vv.length; i+=6) {
     // Initialize vertex buffer with cylinder vertices
     if (!initVertexBuffer(gl, cylinderVerts, 3, gl.FLOAT, 'a_Position'))
+      return -1;
+
+    // Initialize vertex buffer with cylinder colors
+    if (!initVertexBuffer(gl, cylinderColors, 3, gl.FLOAT, 'v_Color'))
       return -1;
       
     console.log("drawing branch");
