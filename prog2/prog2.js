@@ -11,13 +11,14 @@ var VSHADER_SOURCE =
   'uniform mat4 u_TMatrix;\n' + //T matrix
   'uniform mat4 u_SMatrix;\n' + //S matrix
   'varying vec4 v_Color;\n' +
+  'varying vec4 v_Normal;\n' + 
   'void main() {\n' +
   '  gl_Position = u_SMatrix * a_Position;\n' +
   '  gl_Position = u_RyMatrix * gl_Position;\n' +
   '  gl_Position = u_RxMatrix * gl_Position;\n' +
   '  gl_Position = u_TMatrix * gl_Position;\n' +
   '  gl_Position = u_MvpMatrix * gl_Position;\n' +
-  '  v_Color = a_Color;\n' +
+  '  v_Color = vec4 (0,0,0,1);\n' +
   '}\n';
 
 // Fragment shader program
@@ -45,7 +46,9 @@ var cylinderVerts = [];       // vertices for cylinder of length 10 centered at 
 var cylinderLines = [];       // indices for line segments for wireframe cylinder
 var cylinderTriangles = [];   // indices for line segments for shaded cylinder
 var cylinderNorms = [];       // indices for normal vectors
+var cylinderColors = [];      // colors for the cylinder
 var clicks = [];              // click data (x-coord, y-coord, type)
+
 
 function main() {
 
@@ -53,6 +56,7 @@ function main() {
   generateCylinderData();
   generateTreeData();
 
+  console.log("DEBUG leftTree=", leftTree)
   reload();
 }
 
@@ -220,6 +224,7 @@ function dodecagons() {
     var z = 10;
     d.push(x,y,z);
   }
+  console.log("DEBUG:",d);
   return d;
 }
 
@@ -227,15 +232,22 @@ function findMatrices(x1, y1, z1, x2, y2, z2, T, Rx, Ry, S) {
   //set translation matrix
   T.setTranslate(x1,y1,z1);
 
+  console.log("p1 =(",x1,",",y1,",",z1,") p2=(",x2,",",y2,",",z2);
   //calculate translated end point
-  var p2x = x2-x1;
-  var p2y = y2-y1;
-  var p2z = z2-z1;
+  var p2x = x2-x1; // #
+  var p2y = y2-y1; // 0
+  var p2z = z2-z1; // 0
 
+  console.log("235: ", p2x, p2y, p2z);
   //some calculations for finding rotation matrices
   var length = Math.sqrt(Math.pow(p2x,2)+Math.pow(p2y,2)+Math.pow(p2z,2));
   var alpha = Math.asin(p2y/(Math.sqrt(Math.pow(p2y,2)+Math.pow(p2z,2))));
+  if(Math.sqrt(Math.pow(p2y,2)+Math.pow(p2z,2))==0){
+    alpha=0;
+  }
+
   var beta = Math.asin(p2x/length);
+  console.log("240: a=", alpha, "b=", beta, "length=", length);
 
   //set Rx to rotate alpha radians around x-axis
   Rx.setRotate(alpha,1,0,0);
@@ -244,8 +256,8 @@ function findMatrices(x1, y1, z1, x2, y2, z2, T, Rx, Ry, S) {
   Ry.setRotate(-beta,0,1,0);
 
   //set S to length
-  //DEBUG: SHOULD I SCALE BY 
-  S.setScale(length,length,length);
+  //DEBUG: SHOULD I SCALE BY smth else?
+  S.setScale(length/2,length/2,length/2);
   
   //taking inverse makes no difference but leaving this here for principal
   T.invert; 
@@ -342,7 +354,7 @@ function reload() {
 
   // shouLD THI S GO HERE?
   // Clear color and depth buffer
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
 
   // Register function (event handler) to be called on a mouse press
   canvas.onmousedown = function(ev){ click(ev, gl, canvas); };
@@ -351,8 +363,8 @@ function reload() {
 
 function generateTreeData() {
   //generate tree data
-  tree(0, 0, 0, 0, 0, FIFTY, 4, leftTree);
-  tree(0, 0, 0, 0, 0, FORTY, 6, rightTree);
+  tree(0, 0, 0, 0, 0, FIFTY, 1, leftTree);
+  tree(0, 0, 0, 0, 0, FORTY, 4, rightTree);
 }
 
 function generateCylinderData() {
@@ -364,6 +376,7 @@ function generateCylinderData() {
   //index 0-71 are dodecagon vertices
   //index 72-143 are normal end points
   cylinderVerts = new Float32Array(ve);
+  console.log("cverts",cylinderVerts);
 
   cylinderLines = new Uint8Array([
     //wireframe
@@ -409,7 +422,7 @@ function setView(gl) {
   }
   //(0, -∞, 75)
   else {
-    mvpMatrix.setPerspective(30, 1, 1, 100);
+    mvpMatrix.setPerspective(30, 1, 1, 90);
     mvpMatrix.lookAt(0, -40 , 20, 0, 0, 0, 0, 1, 0);
   }
 
@@ -490,6 +503,7 @@ function drawTree(gl, type, x, y) {
   
   // Draw each branch
   for(var i = 0; i < vv.length; i+=6) {
+    console.log("drawing branch");
     // Find start and end points for each branch
     var x1 = vv[i];
     var y1 = vv[i+1];
@@ -504,24 +518,26 @@ function drawTree(gl, type, x, y) {
     var T = new Matrix4;
     var S = new Matrix4;
     findMatrices(x1, y1, z1, x2, y2, z2, T, Rx, Ry, S);
-    
+    console.log("508 Rx =", Rx);
     // Pass matrices to shader 
     loadMatrices(gl, Rx, Ry, T, S);
 
     // Set RENDER mode and draw
-    if(r%2==0){ // flat shading
-      var b = initIndexBuffers(gl, cylinderTriangles);
-      if(b<=0) 
-        return -1;
-      
-      gl.drawElements(gl.TRIANGLES, b, gl.UNSIGNED_BYTE, 0);
-    }
-    else { // wireframe
+    if(r%2==1){ // flat shading
+      console.log("523 DEBUG cylinderLines",cylinderLines)
       var b = initIndexBuffers(gl, cylinderLines);
       if(b<=0) 
         return -1;
-
+      
       gl.drawElements(gl.LINES, b, gl.UNSIGNED_BYTE, 0);
+    }
+    else { // wireframe
+      
+      var b = initIndexBuffers(gl, cylinderTriangles);
+      if(b<=0) 
+        return -1;
+
+      gl.drawElements(gl.TRIANGLES, b, gl.UNSIGNED_BYTE, 0);
     }
   }
 }
@@ -633,3 +649,43 @@ function loadMatrices(gl, Rx, Ry, T, S) {
   gl.uniformMatrix4fv(u_SMatrix, false, S.elements);
 
 }
+
+function findColors(nn) {
+/*
+* Parameters:
+* ------------
+* nn           :: array holding x, y, and z components of all 24 normal vectors
+* 
+* Functionality:
+* --------------
+* - Returns color of each point
+* - Assumes a pure white light <1,1,1> coming from <1,1,1>
+* - Assumes material is red (RBG = (1,0,0))
+*
+*/
+  var colors = [];
+  for(var i = 0; i < 72; i+=3) {
+    var cos = cosBetween(nn[i], nn[i+1],nn[i+2],1,1,1);
+    colors.push(cos,0,0);
+  }
+  return colors;
+}
+  
+function cosBetween(x1, y1, z1, x2, y2, z2) {
+/*
+* Parameters:
+* ------------
+* x1, y1, z1         :: x, y, and z components of first vector
+* x2, y2, z2         :: x, y, and z components of second vector
+* 
+* Functionality:
+* --------------
+* - Returns the cosine of the angle between two vectors
+*
+*/
+  var len1 = Math.sqrt(Math.pow(x1,2)+Math.pow(y1,2)+Math.pow(z1,2));
+  var len2 = Math.sqrt(Math.pow(x2,2)+Math.pow(y2,2)+Math.pow(z2,2));
+  var dot = x1*x2 + y1*y2 + z1*z2;
+  return dot/(len1*len2);
+}
+  
