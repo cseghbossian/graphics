@@ -13,9 +13,9 @@ var VSHADER_SOURCE =
   'varying vec4 v_Color;\n' +
   'varying vec4 v_Normal;\n' + 
   'void main() {\n' +
-  '  gl_Position = u_SMatrix * a_Position;\n' +
-  '  gl_Position = u_RyMatrix * gl_Position;\n' +
+  '  gl_Position = u_MvpMatrix  * u_RyMatrix * u_RxMatrix * u_TMatrix * u_SMatrix * a_Position;\n' +
   '  gl_Position = u_RxMatrix * gl_Position;\n' +
+  '  gl_Position = u_RyMatrix * gl_Position;\n' +
   '  gl_Position = u_TMatrix * gl_Position;\n' +
   '  gl_Position = u_MvpMatrix * gl_Position;\n' +
   '  v_Color = vec4 (0,0,0,1);\n' +
@@ -39,6 +39,11 @@ var r = 0;                    // determines render mode
 var v = 0;                    // determines view mode
 var n = 0;                    // determines if normals show
 var p = 0;                    // determines projection mode
+
+var Rx = new Matrix4;
+var Ry = new Matrix4;
+var T = new Matrix4;
+var S = new Matrix4;
 
 var leftTree = [];            // line segments for r4 tree centered at (0,0,0)
 var rightTree = [];           // line segments for r6 tree centered at (0,0,0)
@@ -250,20 +255,25 @@ function findMatrices(x1, y1, z1, x2, y2, z2, T, Rx, Ry, S) {
   console.log("240: a=", alpha, "b=", beta, "length=", length);
 
   //set Rx to rotate alpha radians around x-axis
-  Rx.setRotate(alpha,1,0,0);
+  T.rotate(alpha,1,0,0);
 
   //set Ry to rotate -beta radians around y-axis
-  Ry.setRotate(-beta,0,1,0);
+  T.rotate(-beta,0,1,0);
 
   //set S to length
   //DEBUG: SHOULD I SCALE BY smth else?
   S.setScale(length*2,length*2,length*2);
   
   //taking inverse makes no difference but leaving this here for principal
-  T.invert; 
-  Rx.invert;
-  Ry.invert;
-  S.invert;
+  // T.invert; 
+  // Rx.invert;
+  // Ry.invert;
+  // S.invert;
+
+  // T.transpose; 
+  // Rx.transpose;
+  // Ry.transpose;
+  // S.transpose;
 
 }
 
@@ -331,9 +341,7 @@ function reload() {
   var canvas = document.getElementById('webgl');
 
   // Get the rendering context for WebGL
-  var gl = canvas.getContext('webgl', {preserveDrawingBuffer:false});
-  //var gl = getWebGLContext(canvas);
-  //gl needs to be 
+  var gl = canvas.getContext('webgl', {preserveDrawingBuffer:true});
 
   if (!gl) {
     console.log('Failed to get the rendering context for WebGL');
@@ -406,6 +414,8 @@ function generateCylinderData() {
     0,24, 1,25, 2,26, 3,27, 4,28, 5,29, 6,30, 7,31, 8,32, 9,33, 10,34, 11,35, 12,36,
     13,37, 14,38, 15,39, 16,40, 17,41, 18,42, 19,43, 20,44, 21,45, 22,46, 23,47
   ]);
+
+  cylinderColors = new Uint8Array([findColors(nn)]);
 }
 
 function setView(gl) {
@@ -518,10 +528,10 @@ function drawTree(gl, type, x, y) {
     var z2 = vv[i+5];
 
     // Set transformation matrices
-    var Rx = new Matrix4;
-    var Ry = new Matrix4;
-    var T = new Matrix4;
-    var S = new Matrix4;
+    // var Rx = new Matrix4;
+    // var Ry = new Matrix4;
+    // var T = new Matrix4;
+    // var S = new Matrix4;
     findMatrices(x1, y1, z1, x2, y2, z2, T, Rx, Ry, S);
     //console.log("508 Rx =", Rx);
     // Pass matrices to shader 
