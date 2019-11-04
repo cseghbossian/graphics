@@ -4,31 +4,40 @@
 // Vertex shader program
 var VSHADER_SOURCE =
   'attribute vec4 a_Position;\n' +
-  // 'uniform float shininess;\n' +
-  // 'uniform vec3 Kd;\n' + 
-  // 'uniform vec3 Ks;\n' +
   'uniform float select_val;\n' +
-  'attribute vec4 a_Normal;\n' +        // Normal
+  'attribute vec4 a_Normal;\n' +   
   'uniform vec4 u_Translation;\n' +
   'uniform vec4 u_Color;\n' +
-  'uniform vec3 u_LightColor;\n' +     // Light color
-  'uniform vec3 u_LightDirection;\n' + // Light direction (in the world coordinate, normalized)
+  'uniform vec3 u_LightColor;\n' +   
+  'uniform vec3 u_LightDirection;\n' + 
   'uniform mat4 u_MvpMatrix;\n' +
   'varying vec4 v_Color;\n' +
   'void main() {\n' +
+  '  float spec;\n' + //
   '  gl_Position = u_MvpMatrix * (a_Position + u_Translation);\n' +  
   '  vec3 normal = normalize(a_Normal.xyz);\n' +
+  '  vec3 L = normalize(u_LightDirection - a_Position.xyz);\n' + // 
   '  float nDotL = max(dot(u_LightDirection, normal), 0.0);\n' +
-  '  vec3 diffuse = u_LightColor * u_Color.rgb * nDotL;\n' + 
+  '  vec3 diffuse = u_LightColor * u_Color.rgb * nDotL;\n' +
+  '  vec3 V = normalize(- a_Position.xyz);\n' +
+  '  vec3 H = normalize(L+V);\n' +
+  '  float specAngle = max(dot(normal,H),0.0);\n' +
+  '  spec = pow(specAngle, 20.);\n' +
+
   '  if (u_Color.a > 0.0) {\n' + //if shading
-  '    if (u_Color.a != select_val)\n' +
-  '      v_Color = vec4(diffuse, u_Color.a);\n' +
-  '    else { \n' +
+  
+  '    if (u_Color.a != select_val) {\n' + //if not selected
+  //'      spec = dot(normal, u_LightDirection);\n'+
+  //'      spec = pow(spec, 5);\n' +
+  '      v_Color = vec4(diffuse+(spec*vec3(1,1,1)), u_Color.a);\n' +
+  '    }\n' +
+
+  '    else { \n' + //if selected
   '      vec3 green = u_LightColor * vec3(0,1,0) * nDotL;\n' + 
   '      v_Color = vec4(green, u_Color.a);\n' +
   '    }\n' +
 	'  } else\n' + //if wireframe
-	'      v_Color = vec4(1.0, 0.0, 1.0, 1.0);\n' +
+	'      v_Color = vec4(0.5, 0.0, 0.6, 1.0);\n' +
 	'}\n';
 
 // Fragment shader program
@@ -51,8 +60,24 @@ var shading = 0;
 var aspectRatio = 1;
 var SpanX = 200;
 var SpanY = 200;
+var numTrees = 0;
 
 function main() {
+/*
+* Functionality:
+* --------------
+* - Retrieves <canvas> element from driver.html
+* - Retrieves and verifies rendering context for WebGL
+* - Maintains event listeners to handle toggle switches and file load/save
+* - Fetches and verifies storage locations of each variable in shader programs
+* - Calls click(...) function for each mouse click event
+* - Calls draw(...) function for every click/toggle
+*
+* Outcome:
+* --------
+* Draws a red tree at location of each left click and a blue tree at location of each right click
+* By default, has all switches toggled off
+*/
   // Retrieve <canvas> element
   var canvas = document.getElementById('webgl');
   canvas.oncontextmenu = () => false;
@@ -180,6 +205,15 @@ function main() {
 }
 
 function setViewMatrix(gl, u_MvpMatrix){
+/* Parameters:
+* ------------
+* u_MvpMatrix  :: location of view matrix in shader
+* gl           :: WebGLProgram containing shader program
+*
+* Outcome:
+* --------
+* Sets view matrix depending on viewing modes determined by toggle switches
+*/
 	var mvpMatrix = new Matrix4();   // Model view projection matrix
 	if (proj == 0){
 		mvpMatrix.setOrtho(-SpanX, SpanX, -SpanY, SpanY, -1000, 1000);
@@ -199,6 +233,15 @@ function setViewMatrix(gl, u_MvpMatrix){
 }
 
 function save(filename) {
+/* Parameters:
+* ------------
+* filename  :: filename to save output to
+*
+* Outcome:
+* --------
+* Saves click metadata from g_points[] into a file called filename
+* Creates filename if it doesn't already exist
+*/
   var savedata = document.createElement('a');
   savedata.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(g_points));
   savedata.setAttribute('download', filename);
@@ -209,6 +252,10 @@ function save(filename) {
 }
 
 function load() {
+/* Outcome:
+* ---------
+* Loads click data from file chosen by user
+*/
     var Loadfile = document.getElementById("loadscene").files[0];
     var reader = new FileReader();
     reader.readAsText(Loadfile);
@@ -224,6 +271,19 @@ function load() {
 }
 
 function click(ev, gl, canvas, u_MvpMatrix, select_val) {
+/* Parameters:
+* ------------
+* ev         :: MouseEvent when user clicks canvas
+* gl         :: WebGLProgram containing shader program
+* canvas     :: HTMLElement <canvas>
+* u_MvpMatrix     :: GLint number indicating location of u_MvpMatrix variable in fragment shader
+* select_val     :: GLint number indicating location of select_val variable in fragment shader
+*
+* Outcome:
+* --------
+* Saves click data into an array g_points[] if create mode
+* Calls check(...) to select tree if select mode
+*/
 
   var x = ev.clientX; // x coordinate of a mouse pointer
   var y = ev.clientY; // y coordinate of a mouse pointer
@@ -240,15 +300,24 @@ function click(ev, gl, canvas, u_MvpMatrix, select_val) {
     x = ((x - rect.left) - canvas.width/2)/(canvas.width/2);
     y = (canvas.height/2 - (y - rect.top))/(canvas.height/2);
 
-    console.log("  draw tree");
     // Store the coordinates to g_points array
-    g_points.push([x, y, btn]);
+    g_points.push([x, y, btn, numTrees]);
+    numTrees++;
     draw(gl, u_MvpMatrix);
   }
 
 }
 
 function draw(gl, u_MvpMatrix) {
+/* Parameters:
+* ------------
+* gl              :: WebGLProgram containing shader program
+* u_MvpMatrix     :: GLint number indicating location of u_MvpMatrix variable in fragment shader
+*
+* Outcome:
+* --------
+* Draws each tree stored in g_points by calling drawTree(...)
+*/
   setViewMatrix(gl, u_MvpMatrix);
   
 	var len = g_points.length;
@@ -259,6 +328,16 @@ function draw(gl, u_MvpMatrix) {
 }
 
 function drawTree(gl, u_MvpMatrix, xy) {
+/* Parameters:
+* ------------
+* gl              :: WebGLProgram containing shader program
+* u_MvpMatrix     :: GLint number indicating location of u_MvpMatrix variable in fragment shader
+* xy              :: a 4-tuple from g_points containing click data: (x-coord, y-coord, type, index)
+*
+* Outcome:
+* --------
+* Draws each cylinder inside tree by calling drawCylinder(...)
+*/
   if(xy[2] == 0)
 	var v = new Float32Array(treeR3);
   else
@@ -276,6 +355,22 @@ function drawTree(gl, u_MvpMatrix, xy) {
 }
 
 function drawCylinder(gl, u_MvpMatrix, x1, y1, z1, x2, y2, z2, d, xy) {
+/* Parameters:
+* ------------
+* gl              :: WebGLProgram containing shader program
+* u_MvpMatrix     :: GLint number indicating location of u_MvpMatrix variable in fragment shader
+* (x1,y1,z1)      :: center of top of cylinder
+* (x2,y2,z2)      :: center of base of cylinder
+* xy              :: a 4-tuple from g_points containing click data: (x-coord, y-coord, type, index)
+* d               :: distance between two points
+*
+* Functionality
+* -------------
+* Calculates vertices and normals for cylinder
+* Creates and fills normal and vertex buffers
+* Passes translation vector to shader
+* Calls draw function for LINES or TRIANGLES, depending on render mode
+*/
 	r1 = d/10;
 	r2 = d/20;
 	sides = 12;
@@ -406,15 +501,31 @@ function drawCylinder(gl, u_MvpMatrix, x1, y1, z1, x2, y2, z2, d, xy) {
 }
 
 function check(gl, x, y, select_val, u_MvpMatrix) {
+/* Parameters:
+* ------------
+* gl              :: WebGLProgram containing shader program
+* u_MvpMatrix     :: GLint number indicating location of u_MvpMatrix variable in fragment shader
+* select_val      :: GLint number indicating location of select_val variable in fragment shader
+* x               :: x-coordinate of click
+* y               :: y-coordinate of click
+*
+* Functionality:
+* --------------
+* Passes the alpha value of the pixel at the location of the click to shader 
+* returns this alpha value for debugging purposes
+*
+* Outcome:
+* --------
+* Changes the color of the selected tree to green 
+*/
   // Read pixel at the clicked position
   var pixels = new Uint8Array(4);
   draw(gl, u_MvpMatrix);
   gl.readPixels(x, y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
 
   console.log("pixels:", pixels);
-
   gl.uniform1f(select_val, pixels[3]/255.0);  // Pass pixel value to shader
   draw(gl, u_MvpMatrix); // Draw the cube
   
-  return pixels[0];
+  return pixels[3]/255.0;
 }
