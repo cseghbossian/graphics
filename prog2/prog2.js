@@ -28,7 +28,7 @@ var FSHADER_SOURCE =
   '#endif\n' +
   'varying vec4 v_Color;\n' +
   'void main() {\n' +
-  '  gl_FragColor = vec4 (0,0,0,1);\n' +
+  '  gl_FragColor = vec4 (1,0,0,1);\n' +
   '}\n';
 
 //GLOBAL VARIABLES
@@ -335,6 +335,7 @@ function toggleProjection() {
 * Page reloads with normals switched between hidden and showing
 */
   p++;
+  reload();
 }
 
 function reload() {
@@ -354,7 +355,7 @@ function reload() {
     return;
   }
   // Set the clear color and enable the depth test
-  gl.clearColor(.3, 0, .25, 0.4);
+  gl.clearColor(.3, 0, .25, 0.1);
   gl.enable(gl.DEPTH_TEST);
 
   //set VIEW and PROJECTION MODE
@@ -433,10 +434,15 @@ function setView(gl) {
     mvpMatrix.setOrtho(-2,2,-2,2,0,13);
     mvpMatrix.lookAt(0, 0, 12.5, 0, 0, 0, 0, 1, 0);
   }
-  //(0, -∞, 75)
+  //(0, -∞, 75) perspective
+  else if (v%2==0 && p%2==0) {
+    mvpMatrix.setPerspective(30, 1, 1, 80);
+    mvpMatrix.lookAt(0, -11 , 5, 0, 0, 0, 0, 1, 0);
+  }
+  //(0, -∞, 75) ortho
   else {
-    mvpMatrix.setPerspective(30, 1, 1, 90);
-    mvpMatrix.lookAt(0, -40 , 20, 0, 0, 0, 0, 1, 0);
+    mvpMatrix.setOrtho(-2,2,-2,2,0,13);
+    mvpMatrix.lookAt(0.0, -1.0, .50, 0, 0, 0, 0, 1, 0);
   }
 
   // Pass the model view projection matrix to u_MvpMatrix
@@ -518,9 +524,6 @@ function drawTree(gl, type, x, y) {
     if (!initVertexBuffer(gl, cylinderVerts, 3, gl.FLOAT, 'a_Position'))
       return -1;
 
-    // Initialize vertex buffer with cylinder colors
-    if (!initVertexBuffer(gl, cylinderColors, 3, gl.FLOAT, 'v_Color'))
-      return -1;
       
     console.log("drawing branch");
     // Find start and end points for each branch
