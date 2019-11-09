@@ -260,53 +260,58 @@ function clickC(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
 }
 
 function clickS(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
+  //if wireframe, do nothing
+  if(mode!=0){ 
+    return;
+  }
   // Write the positions of vertices to a vertex shader
 	var downX = ev.clientX; 
   var downY = ev.clientY; 
-  var downBtn = ev.button;
+  var upX = 0;
+  var upY = 0;
+  var btn = ev.button;
 	var rect = ev.target.getBoundingClientRect();
   var x_in_canvas = ev.clientX - rect.left, y_in_canvas = rect.bottom - ev.clientY;
   console.log("downX", downX);
   console.log("downY", downY);
-  //collect mouse release info
-  var upX = 0;
-  var upY = 0;
-  var upBtn = -1;
+
   canvas.onmouseup = function(ev) {
+    //collect mouse up info
     upX = ev.clientX;
     upY = ev.clientY;
     upBtn = ev.button;
     console.log("upX", upX);
     console.log("upY", upY);
-    console.log("upBtn", upBtn);
 
-  }
+    if(Math.abs(downX-upX)<5 && Math.abs(downY-upY)<5) {  //if click (not drag)
+      // Read pixels at click location
+      gl.uniform1i(u_Clicked,1);
+      draw(gl, u_MvpMatrix);
+      var pixels = new Uint8Array(4);
+      gl.readPixels(x_in_canvas, y_in_canvas, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+      idx = Math.round(pixels[0]/5);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); 
+      gl.uniform1i(u_Clicked,0);
 
-	gl.uniform1i(u_Clicked,1); // Pass true to u_Clicked
+      //select
+      if (selected == 0) { //if no selected tree
+        if(pixels[0] != 0) { //if clicking on tree for selection
+          g_points[(idx-1)][2]++;
+          selected = idx;
+        }
+      }
+      //deselect
+      else { //if there is selected tree
+        if (pixels[0] == 0) { //if pressing on white
+          g_points[(selected-1)][2]--; 
+          selected = 0;
+        }
+      }
+    } 
+
+
   draw(gl, u_MvpMatrix);
-
-	var pixels = new Uint8Array(4); // Array for storing the pixel value
-	gl.readPixels(x_in_canvas, y_in_canvas, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-  idx = Math.round(pixels[0]/5);
-	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); 
-	gl.uniform1i(u_Clicked,0); // Pass false to u_Clicked(rewrite the cube)	
-
-	if (mode == 0) { //if shaded
-		if (selected == 0) { //if no selected tree
-      if(pixels[0] != 0) { //if clicking on tree for selection
-				g_points[(idx-1)][2]++;
-				selected = idx;
-			}
-		}
-		else if (selected > 0) { //if there is selected tree
-			if (pixels[0] == 0) { //if pressing on white
-				g_points[(selected-1)][2]--; 
-				selected = 0;
-			}
-		}
-	}
-
-	draw(gl, u_MvpMatrix);
+  }
 }
 
 // function click(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
@@ -355,7 +360,7 @@ function clickS(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
 //Draw function
 function draw(gl, u_MvpMatrix) {
 	setViewMatrix(gl, u_MvpMatrix);
-	console.log(g_points);
+	//console.log(g_points);
 	var len = g_points.length;
 	for(var i = 0; i < len; i++) {
 		var xy = g_points[i];
