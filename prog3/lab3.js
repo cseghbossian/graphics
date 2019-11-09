@@ -90,7 +90,7 @@ function main() {
     return;
   }
 
-//Switch for Top/Side view toggle  
+//Switch for Create/Select toggle  
   var checkbox0 = document.getElementById("myCheck0");
   checkbox0.addEventListener('change', function () {
     if (checkbox0.checked) {
@@ -187,9 +187,17 @@ function main() {
   }
   gl.uniform1i(u_Clicked, 0); // Pass false to u_Clicked
   // Register function (event handler) to be called on a mouse press
-//  document.onkeydown = function(ev){ keydown(ev, gl, u_MvpMatrix); };
 
-  canvas.onmousedown = function(ev){ click(ev, gl, canvas, u_MvpMatrix, u_Clicked); };
+  canvas.onmousedown = function(ev){
+    if(clickMode==0) {
+      clickC(ev, gl, canvas, u_MvpMatrix, u_Clicked);
+    }
+    else {
+      clickS(ev, gl, canvas, u_MvpMatrix, u_Clicked);
+    }
+  }
+  
+  canvas.onmouseup = function(){console.log("mouse up");}
   draw(gl, u_MvpMatrix);
 }
 
@@ -234,7 +242,7 @@ function load() {
 }
 
 //All mouse functionalities
-function click(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
+function clickC(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
   // Write the positions of vertices to a vertex shader
 	var x = ev.clientX; // x coordinate of a mouse pointer
 	var y = ev.clientY; // y coordinate of a mouse pointer
@@ -242,45 +250,107 @@ function click(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
 	var btn = ev.button;
 	x = ((x - rect.left) - canvas.width/2)/(canvas.width/2);
 	y = (canvas.height/2 - (y - rect.top))/(canvas.height/2);
-	var x_in_canvas = ev.clientX - rect.left, y_in_canvas = rect.bottom - ev.clientY;
-	gl.uniform1i(u_Clicked,1); // Pass false to u_Clicked
-  draw(gl, u_MvpMatrix);
-	var pixels = new Uint8Array(4); // Array for storing the pixel value
-	gl.readPixels(x_in_canvas, y_in_canvas, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-	console.log("pixel color value = " + pixels);
-	idx = Math.round(pixels[0]/5);
-	//idx = pixels[0];
-	console.log("id value = " + idx);
-	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); 
-	gl.uniform1i(u_Clicked,0); // Pass false to u_Clicked(rewrite the cube)	
 
-	if (mode == 0){ //if shaded
-		if (selected == 0){ //if no selected tree
-      if (pixels[0] == 0){ //if click background
-        if(clickMode==0) { //if creation mode
-          g_points.push([x, y, btn, ++id]);
-        }
-			}
-			else{ 
-				g_points[(idx-1)][2]++;
-				selected = idx;
-				}
-			}
-		else if (selected > 0){ //if there is selected tree
-			if (pixels[0] == 0){
-				g_points[(selected-1)][2]--;
-				selected = 0;
-				}
-			}
-		}
+  //if in shaded mode, create new tree
+  if (mode == 0) { 
+    g_points.push([x, y, btn, ++id]);
+  }
 
 	draw(gl, u_MvpMatrix);
 }
 
-//All keyboard functionalities
-function keydown(ev, gl, u_MvpMatrix) {
-	console.log("removed in this version");
+function clickS(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
+  // Write the positions of vertices to a vertex shader
+	var downX = ev.clientX; 
+  var downY = ev.clientY; 
+  var downBtn = ev.button;
+	var rect = ev.target.getBoundingClientRect();
+  var x_in_canvas = ev.clientX - rect.left, y_in_canvas = rect.bottom - ev.clientY;
+  console.log("downX", downX);
+  console.log("downY", downY);
+  //collect mouse release info
+  var upX = 0;
+  var upY = 0;
+  var upBtn = -1;
+  canvas.onmouseup = function(ev) {
+    upX = ev.clientX;
+    upY = ev.clientY;
+    upBtn = ev.button;
+    console.log("upX", upX);
+    console.log("upY", upY);
+    console.log("upBtn", upBtn);
+
+  }
+
+	gl.uniform1i(u_Clicked,1); // Pass true to u_Clicked
+  draw(gl, u_MvpMatrix);
+
+	var pixels = new Uint8Array(4); // Array for storing the pixel value
+	gl.readPixels(x_in_canvas, y_in_canvas, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+  idx = Math.round(pixels[0]/5);
+	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); 
+	gl.uniform1i(u_Clicked,0); // Pass false to u_Clicked(rewrite the cube)	
+
+	if (mode == 0) { //if shaded
+		if (selected == 0) { //if no selected tree
+      if(pixels[0] != 0) { //if clicking on tree for selection
+				g_points[(idx-1)][2]++;
+				selected = idx;
+			}
+		}
+		else if (selected > 0) { //if there is selected tree
+			if (pixels[0] == 0) { //if pressing on white
+				g_points[(selected-1)][2]--; 
+				selected = 0;
+			}
+		}
+	}
+
+	draw(gl, u_MvpMatrix);
 }
+
+// function click(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
+//   // Write the positions of vertices to a vertex shader
+// 	var x = ev.clientX; // x coordinate of a mouse pointer
+// 	var y = ev.clientY; // y coordinate of a mouse pointer
+// 	var rect = ev.target.getBoundingClientRect();
+// 	var btn = ev.button;
+// 	x = ((x - rect.left) - canvas.width/2)/(canvas.width/2);
+// 	y = (canvas.height/2 - (y - rect.top))/(canvas.height/2);
+//   var x_in_canvas = ev.clientX - rect.left, y_in_canvas = rect.bottom - ev.clientY;
+  
+// 	gl.uniform1i(u_Clicked,1); // Pass true to u_Clicked
+//   draw(gl, u_MvpMatrix);
+
+// 	var pixels = new Uint8Array(4); // Array for storing the pixel value
+// 	gl.readPixels(x_in_canvas, y_in_canvas, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+//   idx = Math.round(pixels[0]/5);
+
+// 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); 
+// 	gl.uniform1i(u_Clicked,0); // Pass false to u_Clicked(rewrite the cube)	
+
+// 	if (mode == 0){ //if shaded
+// 		if (selected == 0){ //if no selected tree
+//       if (pixels[0] == 0){ //if click background
+//         if(clickMode==0) { //if creation mode
+//           g_points.push([x, y, btn, ++id]);
+//         }
+// 			}
+// 			else{ //if clicking on tree for selection
+// 				g_points[(idx-1)][2]++;
+// 				selected = idx;
+// 				}
+// 			}
+// 		else if (selected > 0){ //if there is selected tree
+// 			if (pixels[0] == 0){ //if pressing on white
+// 				g_points[(selected-1)][2]--; 
+// 				selected = 0;
+// 				}
+// 			}
+// 		}
+
+// 	draw(gl, u_MvpMatrix);
+// }
 
 //Draw function
 function draw(gl, u_MvpMatrix) {
@@ -289,20 +359,20 @@ function draw(gl, u_MvpMatrix) {
 	var len = g_points.length;
 	for(var i = 0; i < len; i++) {
 		var xy = g_points[i];
-		drawTree(gl, u_MvpMatrix, xy);
+		drawTree(gl, xy);
   }
 }
 
 //Draw a tree 
-function drawTree(gl, u_MvpMatrix, xy) {
+function drawTree(gl, xy) {
   if(xy[2] == 0)
-	var v = new Float32Array(treeR3);
+	var v = new Float32Array(treeR2);
   else
-	var v = new Float32Array(treeR5);  
+	var v = new Float32Array(treeR2);  
  
   var n = v.length;
   for(var i = 0; i < n; i=i+6) {
-	var d = Math.sqrt((v[i]-v[i+3])*(v[i]-v[i+3])+(v[i+1]-v[i+4])*(v[i+1]-v[i+4])+(v[i+2]-v[i+5])*(v[i+2]-v[i+5]));
+	  var d = Math.sqrt((v[i]-v[i+3])*(v[i]-v[i+3])+(v[i+1]-v[i+4])*(v[i+1]-v[i+4])+(v[i+2]-v[i+5])*(v[i+2]-v[i+5]));
 	drawCylinder(gl, v[i],v[i+1],v[i+2], v[i+3],v[i+4],v[i+5], d, xy);
   }
 }
