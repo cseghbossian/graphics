@@ -66,6 +66,7 @@ var FSHADER_SOURCE =
   '}\n';
 
 var g_points = [];  // The array for the position of a mouse press
+var matrices = [];
 var mode = 0;
 var clickMode = 0;
 var view = 1;
@@ -190,14 +191,19 @@ function main() {
 
   canvas.onmousedown = function(ev){
     if(clickMode==0) {
-      clickC(ev, gl, canvas, u_MvpMatrix, u_Clicked);
+      clickC(ev, gl, canvas, u_MvpMatrix);
     }
     else {
       clickS(ev, gl, canvas, u_MvpMatrix, u_Clicked);
     }
   }
+  //scaling
+  canvas.onmousewheel = function(ev) {
+    if(clickmode==1){
+      setTransMatrix(0,0,0,0,ev.wheelData);
+    }
+  }
   
-  canvas.onmouseup = function(){console.log("mouse up");}
   draw(gl, u_MvpMatrix);
 }
 
@@ -242,7 +248,7 @@ function load() {
 }
 
 //All mouse functionalities
-function clickC(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
+function clickC(ev, gl, canvas, u_MvpMatrix) {
   // Write the positions of vertices to a vertex shader
 	var x = ev.clientX; // x coordinate of a mouse pointer
 	var y = ev.clientY; // y coordinate of a mouse pointer
@@ -253,10 +259,16 @@ function clickC(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
 
   //if in shaded mode, create new tree
   if (mode == 0) { 
+    if (btn==1) {
+      btn=0;
+    }
+    var tmatrix = new Matrix4();
     g_points.push([x, y, btn, ++id]);
+    matrices.push(tmatrix);
   }
 
-	draw(gl, u_MvpMatrix);
+  draw(gl, u_MvpMatrix);
+  console.log("Matrices:", matrices);
 }
 
 function clickS(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
@@ -311,14 +323,14 @@ function clickS(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
     } 
     //drag
     else{
-      var N = getTransMatrix(downX, downY, upX, upY, btn);
+      var N = setTransMatrix(downX, downY, upX, upY, btn);
     }
 
   draw(gl, u_MvpMatrix);
   }
 }
 
-function getTransMatrix(downX, downY, upX, upY, btn) {
+function setTransMatrix(downX, downY, upX, upY, btn) {
   //rotating
   if(btn == 2) {
     if(Math.abs(downX-upX) > Math.abs(downY-upY)){
@@ -334,54 +346,15 @@ function getTransMatrix(downX, downY, upX, upY, btn) {
     var ydisp = upY - downY;
     console.log("translating on x- and y-axes"); 
   }
-  //scaling OR translating along z
+  //translating along z
+  else if(btn==1) {
+    console.log("translating");
+  }
+  //scaling
   else {
-    console.log("scaling OR translating");
+    console.log("scaling");
   }
 }
-
-// function click(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
-//   // Write the positions of vertices to a vertex shader
-// 	var x = ev.clientX; // x coordinate of a mouse pointer
-// 	var y = ev.clientY; // y coordinate of a mouse pointer
-// 	var rect = ev.target.getBoundingClientRect();
-// 	var btn = ev.button;
-// 	x = ((x - rect.left) - canvas.width/2)/(canvas.width/2);
-// 	y = (canvas.height/2 - (y - rect.top))/(canvas.height/2);
-//   var x_in_canvas = ev.clientX - rect.left, y_in_canvas = rect.bottom - ev.clientY;
-  
-// 	gl.uniform1i(u_Clicked,1); // Pass true to u_Clicked
-//   draw(gl, u_MvpMatrix);
-
-// 	var pixels = new Uint8Array(4); // Array for storing the pixel value
-// 	gl.readPixels(x_in_canvas, y_in_canvas, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-//   idx = Math.round(pixels[0]/5);
-
-// 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); 
-// 	gl.uniform1i(u_Clicked,0); // Pass false to u_Clicked(rewrite the cube)	
-
-// 	if (mode == 0){ //if shaded
-// 		if (selected == 0){ //if no selected tree
-//       if (pixels[0] == 0){ //if click background
-//         if(clickMode==0) { //if creation mode
-//           g_points.push([x, y, btn, ++id]);
-//         }
-// 			}
-// 			else{ //if clicking on tree for selection
-// 				g_points[(idx-1)][2]++;
-// 				selected = idx;
-// 				}
-// 			}
-// 		else if (selected > 0){ //if there is selected tree
-// 			if (pixels[0] == 0){ //if pressing on white
-// 				g_points[(selected-1)][2]--; 
-// 				selected = 0;
-// 				}
-// 			}
-// 		}
-
-// 	draw(gl, u_MvpMatrix);
-// }
 
 //Draw function
 function draw(gl, u_MvpMatrix) {
