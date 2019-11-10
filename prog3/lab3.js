@@ -283,7 +283,8 @@ function clickS(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
     console.log("upX", upX);
     console.log("upY", upY);
 
-    if(Math.abs(downX-upX)<5 && Math.abs(downY-upY)<5) {  //if click (not drag)
+    //click(not drag)
+    if(Math.abs(downX-upX)<5 && Math.abs(downY-upY)<5) { 
       // Read pixels at click location
       gl.uniform1i(u_Clicked,1);
       draw(gl, u_MvpMatrix);
@@ -308,9 +309,34 @@ function clickS(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
         }
       }
     } 
-
+    //drag
+    else{
+      var N = getTransMatrix(downX, downY, upX, upY, btn);
+    }
 
   draw(gl, u_MvpMatrix);
+  }
+}
+
+function getTransMatrix(downX, downY, upX, upY, btn) {
+  //rotating
+  if(btn == 2) {
+    if(Math.abs(downX-upX) > Math.abs(downY-upY)){
+      console.log("rotating about z-axis");
+    }
+    else {
+      console.log("rotating about x-axis");
+    }
+  }
+  //translating along x, y
+  else if(btn == 0) {
+    var xdisp = upX - downX;
+    var ydisp = upY - downY;
+    console.log("translating on x- and y-axes"); 
+  }
+  //scaling OR translating along z
+  else {
+    console.log("scaling OR translating");
   }
 }
 
