@@ -314,18 +314,18 @@ function clickS(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
 }
 
 function setTransMatrix(downX, downY, upX, upY, btn) {
-  var newMatrix = new Matrix4();
+  var newMatrix = matrices[selected-1];
   //rotating
   if(btn == 2) {
     if(Math.abs(downX-upX) > Math.abs(downY-upY)){
       console.log("rotating about z-axis", downX-upX);
-      var rad = (downX-upX)/60*Math.PI;
-      newMatrix.setRotate(rad, 0, 0, 1);
+      var rad = (downX-upX)*Math.PI/30;
+      newMatrix.rotate(rad, 0, 0, 1);
     }
     else {
       console.log("rotating about x-axis", downY-upY);
-      var rad = (downX-upX)/60*Math.PI;
-      newMatrix.setRotate(rad, 1, 0, 0);
+      var rad = (downY-upY)*Math.PI/30;
+      newMatrix.rotate(rad, 1, 0, 0);
     }
   }
   //translating along x, y
@@ -333,12 +333,12 @@ function setTransMatrix(downX, downY, upX, upY, btn) {
     console.log("translating on x- and y-axes"); 
     var xdisp = upX - downX;
     var ydisp = downY - upY;
-    newMatrix.setTranslate(xdisp, ydisp, 0);
+    newMatrix.translate(xdisp, ydisp, 0);
   }
   //translating along z
   else if(btn==1) {
     console.log("translating on z-axis");
-    newMatrix.setTranslate(0, 0, upY-downY);
+    newMatrix.translate(0, 0, upY-downY);
   }
   //scaling
   else {
