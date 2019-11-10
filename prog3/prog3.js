@@ -1,5 +1,6 @@
 // Program3 
-// CylTree.js v0.02
+// prog3.js by Celine Seghbossian
+// Base code taken from CylTree.js by Fahim Hasan
 
 
 // Vertex shader program
@@ -7,6 +8,7 @@ var VSHADER_SOURCE =
   'attribute vec4 a_Position;\n' +
   'attribute vec4 a_Normal;\n' +        // Normal
   'uniform vec4 u_Translation;\n' +
+  'uniform mat4 m_Transformation;\n' +
   'uniform vec4 u_Color;\n' +
   'uniform vec4 u_idColor;\n' +  
   'uniform vec3 u_LightColor;\n' +     // Light color
@@ -15,7 +17,7 @@ var VSHADER_SOURCE =
   'uniform bool u_Clicked;\n' + // Mouse is pressed
   'varying vec4 v_Color;\n' +
   'void main() {\n' +
-  '  gl_Position = u_MvpMatrix * (a_Position + u_Translation);\n' +  
+  '  gl_Position = u_MvpMatrix * m_Transformation * (a_Position + u_Translation);\n' +  
 	// Make the length of the normal 1.0
   '  vec3 normal = normalize(a_Normal.xyz);\n' +
   // Dot product of the light direction and the orientation of a surface (the normal)
@@ -330,7 +332,7 @@ function setTransMatrix(downX, downY, upX, upY, btn) {
   else if(btn == 0) {
     console.log("translating on x- and y-axes"); 
     var xdisp = upX - downX;
-    var ydisp = upY - downY;
+    var ydisp = downY - upY;
     newMatrix.setTranslate(xdisp, ydisp, 0);
   }
   //translating along z
@@ -477,9 +479,17 @@ function drawCylinder(gl, x1, y1, z1, x2, y2, z2, d, xy) {
     console.log('Failed to get the storage location of u_Translation');
     return;
   }
-
   gl.uniform4f(u_Translation, SpanX*xy[0], (400/g_EyeZ)*SpanY*xy[1], 0, 0);
 
+  // Pass the mouse transformation to the vertex shader
+  var m_Transformation = gl.getUniformLocation(gl.program, 'm_Transformation');
+  if (!m_Transformation) {
+    console.log('Failed to get the storage location of m_Transformation');
+    return;
+  }
+  var tMatrix = matrices[xy[3]-1].elements;
+  gl.uniformMatrix4fv(m_Transformation, false, tMatrix);
+  
   var u_Color = gl.getUniformLocation(gl.program, 'u_Color');
   if (!u_Color) {
     console.log('Failed to get the storage location of u_Color');
