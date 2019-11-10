@@ -1,28 +1,6 @@
-// Program2 with pick functionality (Max limit: 50 trees)
+// Program3 
 // CylTree.js v0.02
-/**
- * Created by Fahim Hasan Khan
- * Date: 11/05/2019
- * DISCLAIMER: Use at your own risk. There's more than one way to implement this. So, this method may be completely different than yours, your data structure, 
- * your coding style, etc. and may also require time to adapt to your code, etc. It is highly recommended the use it as a guide to complete your version (if necessary), 
- * or use it as it is and expand to add functionality for remaining assignments.
- *
- * Changelog (11/5/2019)
- * =====================
- * 1. Click (with left or right mouse button) to pick a tree. "Picking is done by left clicking on an tree. 
- * You can pick on any tree that's currently visible. You indicate that a tree has been picked by changing its color to green. 
- * You deselect an object by left clicking on the background. (To distinguish this action from creating a new tree, 
- * deselection happens only when there's a tree that's been picked. Also, only one tree can be picked at any time). 
- * Doing so will revert the color of the picked object back to its original color. Only one object can be picked at any time. 
- * If you click on another object while you currently have a picked object, nothing happens. 
- * If you want to pick a different tree, you'll have to deselect the current tree first."
- *
- * 2. Flat shading is replaced with smooth shading (diffuse only). So, normal calculation is slightly different now.
- *
- * 3. Using gl.TRIANGLE_STRIP (78 vertices per cylinder) instead of gl.TRIANGLES (~216 vertices per cylinder).
- *
- * 4. Bug fix: There was a bug in creating trees from side view leading to wrong mouse click location in Y-axis, which is fixed now (line 412). Other small bugs are fixed.
- */
+
 
 // Vertex shader program
 var VSHADER_SOURCE =
@@ -199,8 +177,9 @@ function main() {
   }
   //scaling
   canvas.onmousewheel = function(ev) {
-    if(clickmode==1){
-      setTransMatrix(0,0,0,0,ev.wheelData);
+    if(clickMode==1){
+      console.log("in main", ev.wheelDelta);
+      setTransMatrix(0,0,0,0,ev.wheelDelta);
     }
   }
   
@@ -323,7 +302,9 @@ function clickS(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
     } 
     //drag
     else{
-      var N = setTransMatrix(downX, downY, upX, upY, btn);
+      if(clickMode==1){
+        setTransMatrix(downX, downY, upX, upY, btn);
+      }
     }
 
   draw(gl, u_MvpMatrix);
@@ -331,29 +312,44 @@ function clickS(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
 }
 
 function setTransMatrix(downX, downY, upX, upY, btn) {
+  var newMatrix = new Matrix4();
   //rotating
   if(btn == 2) {
     if(Math.abs(downX-upX) > Math.abs(downY-upY)){
-      console.log("rotating about z-axis");
+      console.log("rotating about z-axis", downX-upX);
+      var rad = (downX-upX)/60*Math.PI;
+      newMatrix.setRotate(rad, 0, 0, 1);
     }
     else {
-      console.log("rotating about x-axis");
+      console.log("rotating about x-axis", downY-upY);
+      var rad = (downX-upX)/60*Math.PI;
+      newMatrix.setRotate(rad, 1, 0, 0);
     }
   }
   //translating along x, y
   else if(btn == 0) {
+    console.log("translating on x- and y-axes"); 
     var xdisp = upX - downX;
     var ydisp = upY - downY;
-    console.log("translating on x- and y-axes"); 
+    newMatrix.setTranslate(xdisp, ydisp, 0);
   }
   //translating along z
   else if(btn==1) {
-    console.log("translating");
+    console.log("translating on z-axis");
+    newMatrix.setTranslate(0, 0, upY-downY);
   }
   //scaling
   else {
-    console.log("scaling");
+    console.log("scaling", btn);
+    var sFactor = 1 + (0.1*btn/120);
+    newMatrix.scale(sFactor, sFactor, sFactor);
   }
+  if(selected>0){
+    //set equal to, for now, then later make composite matrix
+    console.log("selected =", selected)
+    matrices[selected-1]=newMatrix;
+  }
+  console.log("newMatrix =",newMatrix);
 }
 
 //Draw function
