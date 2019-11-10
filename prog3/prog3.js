@@ -180,7 +180,6 @@ function main() {
   //scaling
   canvas.onmousewheel = function(ev) {
     if(clickMode==1){
-      console.log("in main", ev.wheelDelta);
       setTransMatrix(0,0,0,0,ev.wheelDelta);
       draw(gl, u_MvpMatrix);
     }
@@ -266,16 +265,12 @@ function clickS(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
   var btn = ev.button;
 	var rect = ev.target.getBoundingClientRect();
   var x_in_canvas = ev.clientX - rect.left, y_in_canvas = rect.bottom - ev.clientY;
-  console.log("downX", downX);
-  console.log("downY", downY);
 
   canvas.onmouseup = function(ev) {
     //collect mouse up info
     upX = ev.clientX;
     upY = ev.clientY;
     upBtn = ev.button;
-    console.log("upX", upX);
-    console.log("upY", upY);
 
     //click(not drag)
     if(Math.abs(downX-upX)<5 && Math.abs(downY-upY)<5) { 
@@ -315,18 +310,24 @@ function clickS(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
 }
 
 function setTransMatrix(downX, downY, upX, upY, btn) {
+  if(selected==0) {
+    return;
+  }
+  var newMatrix = new Matrix4();
   var cMatrix = matrices[selected-1];
+  var invMatrix = new Matrix4();
+  invMatrix.setInverseOf*=(cMatrix);
   //rotating
   if(btn == 2) {
     if(Math.abs(downX-upX) > Math.abs(downY-upY)){
       console.log("rotating about z-axis", downX-upX);
       var rad = (downX-upX)*Math.PI/30;
-      cMatrix.rotate(rad, 0, 0, 1);
+      newMatrix.rotate(rad, 0, 0, 1);
     }
     else {
       console.log("rotating about x-axis", downY-upY);
-      var rad = (downY-upY)*Math.PI/10;
-      cMatrix.rotate(rad, 1, 0, 0);
+      var rad = (downY-upY)*Math.PI/15;
+      newMatrix.rotate(rad, 1, 0, 0);
     }
   }
   //translating along x, y
@@ -334,25 +335,23 @@ function setTransMatrix(downX, downY, upX, upY, btn) {
     console.log("translating on x- and y-axes"); 
     var xdisp = upX - downX;
     var ydisp = downY - upY;
-    cMatrix.translate(xdisp, ydisp, 0);
+    newMatrix.translate(xdisp/2, ydisp/2, 0);
   }
   //translating along z
   else if(btn==1) {
     console.log("translating on z-axis");
-    cMatrix.translate(0, 0, upY-downY);
+    newMatrix.translate(0, 0, (downY-upY)/2);
   }
   //scaling
   else {
     console.log("scaling", btn);
     var sFactor = 1 + (0.1*btn/120);
-    cMatrix.scale(sFactor, sFactor, sFactor);
+    newMatrix.scale(sFactor, sFactor, sFactor);
   }
-  if(selected>0){
-    //set equal to, for now, then later make composite matrix
-    console.log("selected =", selected)
-    matrices[selected-1]=cMatrix;
-  }
-  console.log("cMatrix =",cMatrix);
+  console.log("selected =", selected)
+  matrices[selected-1]=cMatrix.multiply(newMatrix);
+
+  console.log("cMatrix =",cMatrix.multiply(newMatrix));
 }
 
 //Draw function
@@ -368,10 +367,10 @@ function draw(gl, u_MvpMatrix) {
 
 //Draw a tree 
 function drawTree(gl, xy) {
-  if(xy[2] == 0)
-	var v = new Float32Array(treeR2);
+  if(xy[2] == 0 || xy[2] == 1)
+	var v = new Float32Array(treeR3);
   else
-	var v = new Float32Array(treeR2);  
+	var v = new Float32Array(treeR5);  
  
   var n = v.length;
   for(var i = 0; i < n; i=i+6) {
