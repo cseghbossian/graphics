@@ -57,9 +57,25 @@ var aspectRatio = 1;
 var SpanX = 200;
 var SpanY = 200;
 var g_EyeX = 0.0, g_EyeY = 0.0, g_EyeZ = 400.0; // Eye position
-// var g_EyeX = 0.0, g_EyeY = -400.0, g_EyeZ = 75.0; // Eye position
 
 function main() {
+/*
+* Functionality:
+* --------------
+* - Retrieves <canvas> element from driver.html
+* - Retrieves and verifies rendering context for WebGL
+* - Maintains event listeners to handle toggle switches and file load/save
+* - Fetches and verifies storage locations of each variable in shader programs
+* - Calls click(...) function for each mouse click event
+* - Calls draw(...) function for every click/toggle
+* - Calls appropriate event functions when mouse is clicked/dragged/scrolled
+*
+* Outcome:
+* --------
+* Draws a red tree at location of each left click and a blue tree at location of each right click
+* In selection mode, applies transformations to selected tree
+* By default, has all switches toggled off
+*/
   // Retrieve <canvas> element
   var canvas = document.getElementById('webgl');
   canvas.oncontextmenu = () => false;
@@ -189,6 +205,15 @@ function main() {
 }
 
 function setViewMatrix(gl, u_MvpMatrix){
+/* Parameters:
+* ------------
+* u_MvpMatrix  :: location of view matrix in shader
+* gl           :: WebGLProgram containing shader program
+*
+* Outcome:
+* --------
+* Sets view matrix depending on viewing modes determined by toggle switches
+*/
 	var mvpMatrix = new Matrix4();   // Model view projection matrix
 	if (proj == 0){
 		mvpMatrix.setOrtho(-SpanX, SpanX, -SpanY, SpanY, -2000, 2000);
@@ -203,6 +228,15 @@ function setViewMatrix(gl, u_MvpMatrix){
 
 //Saving a file
 function save(filename) {
+/* Parameters:
+* ------------
+* filename  :: filename to save output to
+*
+* Outcome:
+* --------
+* Saves click metadata from g_points[] into a file called filename
+* Creates filename if it doesn't already exist
+*/
   var savedata = document.createElement('a');
   savedata.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(g_points));
   savedata.setAttribute('download', filename);
@@ -214,6 +248,10 @@ function save(filename) {
 
 //Loading a file
 function load() {
+/* Outcome:
+* ---------
+* Loads click data from file chosen by user
+*/
   var Loadfile = document.getElementById("loadscene").files[0];
   var reader = new FileReader();
   reader.readAsText(Loadfile);
@@ -230,6 +268,18 @@ function load() {
 
 //All mouse functionalities
 function clickC(ev, gl, canvas, u_MvpMatrix) {
+/* Parameters:
+* ------------
+* ev              :: MouseEvent when user clicks canvas
+* gl              :: WebGLProgram containing shader program
+* canvas          :: HTMLElement <canvas>
+* u_MvpMatrix     :: GLint number indicating location of u_MvpMatrix variable in fragment shader
+*
+* Outcome:
+* --------
+* Saves click data into an array g_points[] if create && flat-shading mode 
+* Pushes identity matrix into matrices[], corresponding to click
+*/
   // Write the positions of vertices to a vertex shader
 	var x = ev.clientX; // x coordinate of a mouse pointer
 	var y = ev.clientY; // y coordinate of a mouse pointer
@@ -249,10 +299,28 @@ function clickC(ev, gl, canvas, u_MvpMatrix) {
   }
 
   draw(gl, u_MvpMatrix);
-  console.log("Matrices:", matrices);
 }
 
 function clickS(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
+/* Parameters:
+* ------------
+* ev              :: MouseEvent when user clicks down on canvas
+* gl              :: WebGLProgram containing shader program
+* canvas          :: HTMLElement <canvas>
+* u_MvpMatrix     :: GLint number indicating location of u_MvpMatrix variable in fragment shader
+* u_Clicked       :: GLint number indicating location of u_Clicked variable in fragment shader
+*
+* Functionality:
+* --------------
+* - Records mouse up event data and determines if drag or click
+* - If click, selects/deselects tree and updates selected global variable and color data in g_points[]
+* - If drag, calls setTransMatrix() which updates matrices[]
+*
+* Outcome:
+* --------
+* Updates the selected tree's matrix depending on mouse events (if select && flat-shading mode)
+* Does nothing in wireframe mode
+*/
   //if wireframe, do nothing
   if(mode!=0){ 
     return;
@@ -310,6 +378,23 @@ function clickS(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
 }
 
 function setTransMatrix(downX, downY, upX, upY, btn) {
+/* Parameters:
+* ------------
+* downX     :: x-coord of mouse down event
+* downY     :: y-coord of mouse down event
+* upX       :: x-coord of mouse up event
+* upY       :: y-coord of mouse up event
+* btn       :: 0,1,2 for left,middle,right OR a multiple of 120 for scrolling
+*
+* Functionality:
+* --------------
+* - Determines type of transformation from mouse data
+* - Updates cumulative matrix in matrices[] with new transformation 
+*
+* Outcome:
+* --------
+* Updates the selected tree's matrix depending on mouse events (if select && flat-shading mode)
+*/
   if(selected==0) {
     return;
   }
@@ -349,13 +434,22 @@ function setTransMatrix(downX, downY, upX, upY, btn) {
     newMatrix.scale(sFactor, sFactor, sFactor);
   }
   console.log("selected =", selected)
-  matrices[selected-1]=cMatrix.multiply(newMatrix);
+  matrices[selected-1]=newMatrix.multiply(cMatrix);
 
   console.log("cMatrix =",cMatrix.multiply(newMatrix));
 }
 
 //Draw function
 function draw(gl, u_MvpMatrix) {
+/* Parameters:
+* ------------
+* gl              :: WebGLProgram containing shader program
+* u_MvpMatrix     :: GLint number indicating location of u_MvpMatrix variable in fragment shader
+*
+* Outcome:
+* --------
+* Draws each tree stored in g_points by calling drawTree(...)
+*/
 	setViewMatrix(gl, u_MvpMatrix);
 	//console.log(g_points);
 	var len = g_points.length;
@@ -367,6 +461,16 @@ function draw(gl, u_MvpMatrix) {
 
 //Draw a tree 
 function drawTree(gl, xy) {
+/* Parameters:
+* ------------
+* gl              :: WebGLProgram containing shader program
+* u_MvpMatrix     :: GLint number indicating location of u_MvpMatrix variable in fragment shader
+* xy              :: a 4-tuple from g_points containing click data: (x-coord, y-coord, type, index)
+*
+* Outcome:
+* --------
+* Draws each cylinder inside tree by calling drawCylinder(...)
+*/
   if(xy[2] == 0 || xy[2] == 1)
 	var v = new Float32Array(treeR3);
   else
@@ -380,6 +484,22 @@ function drawTree(gl, xy) {
 }
 
 function drawCylinder(gl, x1, y1, z1, x2, y2, z2, d, xy) {
+/* Parameters:
+* ------------
+* gl              :: WebGLProgram containing shader program
+* u_MvpMatrix     :: GLint number indicating location of u_MvpMatrix variable in fragment shader
+* (x1,y1,z1)      :: center of top of cylinder
+* (x2,y2,z2)      :: center of base of cylinder
+* xy              :: a 4-tuple from g_points containing click data: (x-coord, y-coord, type, index)
+* d               :: distance between two points
+*
+* Functionality
+* -------------
+* Calculates vertices and normals for cylinder
+* Creates and fills normal and vertex buffers
+* Passes translation vector to shader
+* Calls draw function for LINES or TRIANGLES, depending on render mode
+*/
 	r1 = d/10;
 	r2 = d/20;
 	sides = 12;
