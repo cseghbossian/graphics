@@ -236,7 +236,7 @@ function setViewMatrix(gl, u_MvpMatrix){
 	}
 	else {
     mvpMatrix.setPerspective(45, aspectRatio, 1, 2000);
-    mvpMatrix.lookAt(g_EyeX, g_EyeY, g_EyeZ+500, 0, 0, 0, 0, 1, 0);			
+    mvpMatrix.lookAt(g_EyeX, g_EyeY, g_EyeY+500, 0, 0, 0, 0, 1, 0);			
 	}
 		
 
