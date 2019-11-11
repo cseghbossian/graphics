@@ -53,10 +53,10 @@ var view = 1;
 var proj = 0;
 var id = 0;
 var selected = 0;
-var aspectRatio = 1;
-var SpanX = 200;
-var SpanY = 200;
-var g_EyeX = 0.0, g_EyeY = 0.0, g_EyeZ = 400.0; // Eye position
+var aspectRatio = 1.5;
+var SpanX = 500;
+var SpanY = 500;
+var g_EyeX = 0.0, g_EyeY = 0.0, g_EyeZ = 1000.0; // Eye position
 
 function main() {
 /*
@@ -231,12 +231,14 @@ function setViewMatrix(gl, u_MvpMatrix){
 */
 	var mvpMatrix = new Matrix4();   // Model view projection matrix
 	if (proj == 0){
-		mvpMatrix.setOrtho(-SpanX, SpanX, -SpanY, SpanY, -2000, 2000);
+    mvpMatrix.setOrtho(-SpanX, SpanX, -SpanY, SpanY, -2000, 2000);
+    mvpMatrix.lookAt(g_EyeX, g_EyeY, g_EyeZ, 0, 0, 0, 0, 1, 0);	
 	}
 	else {
-		mvpMatrix.setPerspective(45, aspectRatio, 1, 2000);;		
+    mvpMatrix.setPerspective(45, aspectRatio, 1, 2000);
+    mvpMatrix.lookAt(g_EyeX, g_EyeY, g_EyeZ+500, 0, 0, 0, 0, 1, 0);			
 	}
-	mvpMatrix.lookAt(g_EyeX, g_EyeY, g_EyeZ, 0, 0, 0, 0, 1, 0);		
+		
 
 	gl.uniformMatrix4fv(u_MvpMatrix, false, mvpMatrix.elements);
 }
