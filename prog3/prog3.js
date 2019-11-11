@@ -276,8 +276,8 @@ function load() {
     var len = this.result.length;
     var data = this.result.slice(1, len);
     var xyb = data.split(',');
-    for (var i = 0; i < xyb.length; i=i+4) {
-      g_points.push(([parseFloat(xyb[i]), parseFloat(xyb[i+1]), parseFloat(xyb[i+2]), parseFloat(xyb[i+3])]));
+    for (var i = 0; i < xyb.length; i=i+5) {
+      g_points.push(([parseFloat(xyb[i]), parseFloat(xyb[i+1]), parseFloat(xyb[i+2]), parseFloat(xyb[i+3]),parseFloat(xyb[i+4])]));
     }
   };	
 	console.log("g_points: ", g_points);
@@ -312,7 +312,7 @@ function clickC(ev, gl, canvas, u_MvpMatrix) {
     }
     var tmatrix = new Matrix4();
 
-    g_points.push([x, y, btn, ++id]);
+    g_points.push([x, y, btn, ++id, 1]);
     matrices.push(tmatrix);
   }
 
@@ -458,7 +458,10 @@ function setTransMatrix(downX, downY, upX, upY, btn) {
   else {
     console.log("scaling", btn);
     var sFactor = 1 + (0.1*btn/120);
-    newMatrix.scale(sFactor, sFactor, sFactor);
+    if(g_points[selected-1][4]*sFactor>=0.5 || g_points[selected-1][4]<=2){
+      g_points[selected-1][4]*=sFactor;
+      newMatrix.scale(sFactor, sFactor, sFactor);
+    }
   }
 
   //return to origin
@@ -633,7 +636,7 @@ function drawCylinder(gl, x1, y1, z1, x2, y2, z2, d, xy) {
     console.log('Failed to get the storage location of u_Translation');
     return;
   }
-  gl.uniform4f(u_Translation, SpanX*xy[0], (400/g_EyeZ)*SpanY*xy[1], 0, 0);
+  gl.uniform4f(u_Translation, SpanX*xy[0], SpanY*xy[1], 0, 0);
 
   // Pass the mouse transformation to the vertex shader
   var m_Transformation = gl.getUniformLocation(gl.program, 'm_Transformation');
