@@ -1,6 +1,6 @@
 // Program3 
 // prog3.js by Celine Seghbossian
-// Base code taken from CylTree.js by Fahim Hasan
+// Base code taken from CylTree.js by Fahim Hasan Knan
 
 
 // Vertex shader program
@@ -86,6 +86,21 @@ function main() {
     console.log('Failed to get the rendering context for WebGL');
     return;
   }
+
+  /////////////////////DEBUG//////////////////////////////
+
+  // var M = new Matrix4();
+  // M.setScale(3,3,3);
+  // console.log(M);
+
+  // var MM = new Matrix4();
+  // MM.setScale(5,5,5);
+  // console.log(MM);
+
+  // M.multiply(MM);
+  // console.log(M);
+
+  /////////////////////DEBUG//////////////////////////////
 
 //Switch for Create/Select toggle  
   var checkbox0 = document.getElementById("myCheck0");
@@ -294,6 +309,7 @@ function clickC(ev, gl, canvas, u_MvpMatrix) {
       btn=0;
     }
     var tmatrix = new Matrix4();
+
     g_points.push([x, y, btn, ++id]);
     matrices.push(tmatrix);
   }
@@ -398,10 +414,19 @@ function setTransMatrix(downX, downY, upX, upY, btn) {
   if(selected==0) {
     return;
   }
-  var newMatrix = new Matrix4();
-  var cMatrix = matrices[selected-1];
+  
+  var cMatrix = new Matrix4();
+  cMatrix.set(matrices[selected-1]);
+  
+  
   var invMatrix = new Matrix4();
-  invMatrix.setInverseOf*=(cMatrix);
+  invMatrix.setInverseOf(cMatrix);
+  console.log("cMatrix after=",cMatrix);
+  console.log("invMatrix=",invMatrix);
+  
+  var newMatrix = new Matrix4();
+  //console.log("newMatrix=",newMatrix);
+
   //rotating
   if(btn == 2) {
     if(Math.abs(downX-upX) > Math.abs(downY-upY)){
@@ -433,10 +458,16 @@ function setTransMatrix(downX, downY, upX, upY, btn) {
     var sFactor = 1 + (0.1*btn/120);
     newMatrix.scale(sFactor, sFactor, sFactor);
   }
-  console.log("selected =", selected)
-  matrices[selected-1]=newMatrix.multiply(cMatrix);
 
-  console.log("cMatrix =",cMatrix.multiply(newMatrix));
+  //return to origin
+  matrices[selected-1].multiply(invMatrix);
+  matrices[selected-1].translate(-(SpanX*g_points[selected-1][0]),-(SpanY*g_points[selected-1][1]),0);
+
+  
+  matrices[selected-1].multiply(newMatrix);
+  matrices[selected-1].multiply(cMatrix);
+  matrices[selected-1].translate((SpanX*g_points[selected-1][0]),(SpanY*g_points[selected-1][1]),0);
+
 }
 
 //Draw function
@@ -457,6 +488,7 @@ function draw(gl, u_MvpMatrix) {
 		var xy = g_points[i];
 		drawTree(gl, xy);
   }
+  console.log(g_points);
 }
 
 //Draw a tree 
@@ -472,9 +504,9 @@ function drawTree(gl, xy) {
 * Draws each cylinder inside tree by calling drawCylinder(...)
 */
   if(xy[2] == 0 || xy[2] == 1)
-	var v = new Float32Array(treeR3);
+	var v = new Float32Array(treeR2);
   else
-	var v = new Float32Array(treeR5);  
+	var v = new Float32Array(treeR3);  
  
   var n = v.length;
   for(var i = 0; i < n; i=i+6) {
