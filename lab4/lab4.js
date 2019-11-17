@@ -518,9 +518,9 @@ function drawOrb(gl) {
       si = Math.sin(ai);
       ci = Math.cos(ai);
 
-      positions.push(si * sj * 5);  // X
-      positions.push(cj * 5);       // Y
-      positions.push(ci * sj * 5);  // Z
+      positions.push(si * sj * 20);  // X
+      positions.push(cj * 20);       // Y
+      positions.push(ci * sj * 20);  // Z
     }
   }
 
@@ -586,7 +586,7 @@ function drawOrb(gl) {
     return;
   }
     
-  gl.uniform4f(u_idColor, 1.0, 1.0, 0.0, 1.0);
+  gl.uniform4f(u_Color, 1.0, 0.9, 0.0, 1.0);
 
   gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);  
 }
