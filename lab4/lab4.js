@@ -391,13 +391,11 @@ function clickS(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
     idx = Math.round(pixels[0]/5);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); 
     gl.uniform1i(u_Clicked,0);
-    var isYellow = (pixels[0]>0 && pixels[1]>0 && pixels[2]==0);
-    
+    var isYellow = (pixels[0]==1 && pixels[1]==0.9 && pixels[2]==0);
     //click(not drag)
     if(Math.abs(downX-upX)<5 && Math.abs(downY-upY)<5) { 
-      if(pixels[0]>0 && pixels[1]>0 && pixels[2]==0){
+      if(isYellow){
         light = (light+1) % 2;
-        console.log("clicking the yellowwwwww");
       }
       else {
         //select
@@ -418,9 +416,8 @@ function clickS(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
     }
     //drag
     else{
-      if(pixels[0]>0 && pixels[1]>0 && pixels[2]==0){
+      if(isYellow){
         //transform light
-        console.log("dragging light");
         setTransMatrix(downX, downY, upX, upY, btn, 1);
       }
       else if(!isYellow && clickMode==1){
@@ -461,11 +458,8 @@ function setTransMatrix(downX, downY, upX, upY, btn, l) {
   
   var invMatrix = new Matrix4();
   invMatrix.setInverseOf(cMatrix);
-  console.log("cMatrix after=",cMatrix);
-  console.log("invMatrix=",invMatrix);
   
   var newMatrix = new Matrix4();
-  //console.log("newMatrix=",newMatrix);
 
   //rotating
   if(btn == 2) {
@@ -525,7 +519,6 @@ function draw(gl, u_MvpMatrix) {
 * Draws each tree stored in g_points by calling drawTree(...)
 */
 	setViewMatrix(gl, u_MvpMatrix);
-  //console.log(g_points);
   drawOrb(gl);
 	var len = g_points.length;
 	for(var i = 0; i < len; i++) {
