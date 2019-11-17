@@ -15,24 +15,27 @@ var VSHADER_SOURCE =
   'uniform vec3 u_LightDirection;\n' + // Light direction (in the world coordinate, normalized)
   'uniform mat4 u_MvpMatrix;\n' +
   'uniform bool u_Clicked;\n' + // Mouse is pressed
+  'uniform bool u_LightOn;\n' +
   'varying vec4 v_Color;\n' +
   'void main() {\n' +
   '  gl_Position = u_MvpMatrix * m_Transformation * (a_Position + u_Translation);\n' +  
-	// Make the length of the normal 1.0
   '  vec3 normal = normalize(a_Normal.xyz);\n' +
-  // Dot product of the light direction and the orientation of a surface (the normal)
   '  float nDotL = max(dot(u_LightDirection, normal), 0.0);\n' + //Lambertian
 	'  vec3 diffuse = u_LightColor * u_Color.rgb * nDotL;\n' +	
-	// Calculate the color due to diffuse reflection
 	'  if (u_Color.a == 1.0){\n' +
-	'  	if (u_Clicked) {\n' + //  Draw in red if mouse is pressed
+	'  	if (u_Clicked) {\n' + // Temporarily draw in red if mouse is pressed
 	'    	v_Color = u_idColor;\n' +
-	'  	} else {\n' +
-	'    	v_Color = vec4(diffuse, u_Color.a);\n' +
-	'  	}}\n' +
+  '  	}\n' +
+  '   else {\n' +
+  '     if (u_LightOn && u_Color.g==0.9){\n' +
+  '       v_Color = vec4(0,0,0,1);\n' +
+  '  	  }\n' +
+  '     else {\n' +
+	'    	  v_Color = vec4(diffuse, u_Color.a);\n' +
+	'  	}}}\n' +
 	// Wireframe color
 	'  else\n' +
-	'      v_Color = vec4(1.0, 0.0, 1.0, 1.0);\n' +
+	'    v_Color = vec4(1.0, 0.0, 1.0, 1.0);\n' +
 	'}\n';
 
 // Fragment shader program
@@ -48,7 +51,7 @@ var FSHADER_SOURCE =
 var g_points = [];                // The array for the position of a mouse press
 var matrices = [];                // The array of cumulative transformation matrices for trees
 var sphereMatrix = new Matrix4(); // The cumulative transformation matrix for sphere
-var light = 1;                    // Light on/off
+var light = 0;                    // Light on/off
 var mode = 0;                     // Solid/Wireframe
 var clickMode = 0;                // Selection/Creation
 var view = 1;                     // Top/Side
@@ -518,6 +521,14 @@ function draw(gl, u_MvpMatrix) {
 * --------
 * Draws each tree stored in g_points by calling drawTree(...)
 */
+
+  var u_LightOn = gl.getUniformLocation(gl.program, 'u_LightOn');
+  if (!u_LightOn) {
+    console.log('Failed to get the storage location of u_LightOn');
+    return;
+  }
+  gl.uniform1i(u_LightOn,light);
+
 	setViewMatrix(gl, u_MvpMatrix);
   drawOrb(gl);
 	var len = g_points.length;
@@ -609,14 +620,13 @@ function drawOrb(gl) {
     console.log('Failed to get the storage location of u_Color');
     return;
   }
+  gl.uniform4f(u_Color, 1.0, 0.9, 0.0, 1.0);
   
   var u_idColor = gl.getUniformLocation(gl.program, 'u_idColor');
   if (!u_idColor) {
     console.log('Failed to get the storage location of u_idColor');
     return;
   }
-    
-  gl.uniform4f(u_Color, 1.0, 0.9, 0.0, 1.0);
 
   gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);  
 }
