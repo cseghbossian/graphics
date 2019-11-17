@@ -45,17 +45,19 @@ var FSHADER_SOURCE =
   '  gl_FragColor = v_Color;\n' +
   '}\n';
 
-var g_points = [];  // The array for the position of a mouse press
-var matrices = [];
-var sphereMatrix = new Matrix4();
-var mode = 0;
-var clickMode = 0;
-var view = 1;
-var proj = 0;
-var id = 0;
-var selected = 0;
+var g_points = [];                // The array for the position of a mouse press
+var matrices = [];                // The array of cumulative transformation matrices for trees
+var sphereMatrix = new Matrix4(); // The cumulative transformation matrix for sphere
+var light = 1;                    // Light on/off
+var mode = 0;                     // Solid/Wireframe
+var clickMode = 0;                // Selection/Creation
+var view = 1;                     // Top/Side
+var proj = 0;                     // Orthographic/Perspective
+var id = 0;                       // Counter for tree arrays
+var selected = 0;                 // Id of selected tree
+
 var aspectRatio = 1.5;
-var SpanX = 500;
+var SpanX = 500 * aspectRatio;
 var SpanY = 500;
 var g_EyeX = 0.0, g_EyeY = 0.0, g_EyeZ = 1000.0; // Eye position
 
@@ -203,7 +205,7 @@ function main() {
 
   canvas.onmousedown = function(ev){
     if(clickMode==0) {
-      clickC(ev, gl, canvas, u_MvpMatrix);
+      clickC(ev, gl, canvas, u_MvpMatrix, u_Clicked);
     }
     else {
       clickS(ev, gl, canvas, u_MvpMatrix, u_Clicked);
@@ -212,7 +214,7 @@ function main() {
   //scaling
   canvas.onmousewheel = function(ev) {
     if(clickMode==1){
-      setTransMatrix(0,0,0,0,ev.wheelDelta);
+      setTransMatrix(0,0,0,0,ev.wheelDelta, 0);
       draw(gl, u_MvpMatrix);
     }
   }
@@ -284,8 +286,8 @@ function load() {
 	console.log("g_points: ", g_points);
 }
 
-//All mouse functionalities
-function clickC(ev, gl, canvas, u_MvpMatrix) {
+//Click in create mode
+function clickC(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
 /* Parameters:
 * ------------
 * ev              :: MouseEvent when user clicks canvas
@@ -299,27 +301,57 @@ function clickC(ev, gl, canvas, u_MvpMatrix) {
 * Pushes identity matrix into matrices[], corresponding to click
 */
   // Write the positions of vertices to a vertex shader
-	var x = ev.clientX; // x coordinate of a mouse pointer
-	var y = ev.clientY; // y coordinate of a mouse pointer
+	var downX = ev.clientX; // x coordinate of a mouse pointer
+	var downY = ev.clientY; // y coordinate of a mouse pointer
 	var rect = ev.target.getBoundingClientRect();
 	var btn = ev.button;
-	x = ((x - rect.left) - canvas.width/2)/(canvas.width/2);
-	y = (canvas.height/2 - (y - rect.top))/(canvas.height/2);
+	downX = ((downX - rect.left) - canvas.width/2)/(canvas.width/2);
+  downY = (canvas.height/2 - (downY - rect.top))/(canvas.height/2);
+  var x_in_canvas = ev.clientX - rect.left, y_in_canvas = rect.bottom - ev.clientY;
 
-  //if in shaded mode, create new tree
-  if (mode == 0) { 
-    if (btn==1) {
-      btn=0;
+  gl.uniform1i(u_Clicked,1);
+  draw(gl, u_MvpMatrix);
+  var pixels = new Uint8Array(4);
+  gl.readPixels(x_in_canvas, y_in_canvas, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); 
+  gl.uniform1i(u_Clicked,0);
+
+  canvas.onmouseup = function(ev){
+    //collect mouse up info
+    upX = ev.clientX;
+    upY = ev.clientY;
+
+    if(pixels[0]>0 && pixels[1]>0 && pixels[2]==0) { //Yellow
+      console.log("clicked the yellow!");
+      if(Math.abs(downX-upX)<5 && Math.abs(downY-upY)<5) { //if click (not drag)
+        light = (light+1) % 2;
+      }
+      else {
+        setTransMatrix(downX, downY, upX, upY, btn, 1);
+      }
     }
-    var tmatrix = new Matrix4();
+    else { //not yellow
 
-    g_points.push([x, y, btn, ++id, 1]);
-    matrices.push(tmatrix);
+      if (mode == 0) { //if in shaded mode, add tree
+        var tmatrix = new Matrix4();
+        matrices.push(tmatrix);
+        if (btn==1) {
+          btn=0;
+        }
+        g_points.push([downX, downY, btn, ++id, 1]);
+
+      }
+
+    }
+
   }
+
+
 
   draw(gl, u_MvpMatrix);
 }
 
+//Click in select mode
 function clickS(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
 /* Parameters:
 * ------------
@@ -357,7 +389,6 @@ function clickS(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
     //collect mouse up info
     upX = ev.clientX;
     upY = ev.clientY;
-    upBtn = ev.button;
 
     //click(not drag)
     if(Math.abs(downX-upX)<5 && Math.abs(downY-upY)<5) { 
@@ -388,7 +419,7 @@ function clickS(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
     //drag
     else{
       if(clickMode==1){
-        setTransMatrix(downX, downY, upX, upY, btn);
+        setTransMatrix(downX, downY, upX, upY, btn, 0);
       }
     }
 
@@ -396,7 +427,7 @@ function clickS(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
   }
 }
 
-function setTransMatrix(downX, downY, upX, upY, btn) {
+function setTransMatrix(downX, downY, upX, upY, btn, l) {
 /* Parameters:
 * ------------
 * downX     :: x-coord of mouse down event
