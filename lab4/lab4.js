@@ -394,10 +394,12 @@ function clickS(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
     idx = Math.round(pixels[0]/5);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); 
     gl.uniform1i(u_Clicked,0);
-    var isYellow = (pixels[0]==1 && pixels[1]==0.9 && pixels[2]==0);
+    var isYellow = (pixels[0]==255 && pixels[1]==229 && pixels[2]==0);
+    console.log("pixels", pixels);
     //click(not drag)
     if(Math.abs(downX-upX)<5 && Math.abs(downY-upY)<5) { 
       if(isYellow){
+        console.log("clicked yellow in Select mode");
         light = (light+1) % 2;
       }
       else {
@@ -627,6 +629,7 @@ function drawOrb(gl) {
     console.log('Failed to get the storage location of u_idColor');
     return;
   }
+  gl.uniform4f(u_idColor, 1.0, 0.9, 0.0, 1.0);
 
   gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);  
 }
