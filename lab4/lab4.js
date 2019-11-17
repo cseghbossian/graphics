@@ -319,13 +319,13 @@ function clickC(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); 
   gl.uniform1i(u_Clicked,0);
 
+  //draw(gl, u_MvpMatrix);
   canvas.onmouseup = function(ev){
     //collect mouse up info
     upX = ev.clientX;
     upY = ev.clientY;
 
     if(pixels[0]>0 && pixels[1]>0 && pixels[2]==0) { //Yellow
-      console.log("clicked the yellow!");
       if(Math.abs(downX-upX)<5 && Math.abs(downY-upY)<5) { //if click (not drag)
         light = (light+1) % 2;
       }
@@ -381,6 +381,7 @@ function clickS(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
 	var rect = ev.target.getBoundingClientRect();
   var x_in_canvas = ev.clientX - rect.left, y_in_canvas = rect.bottom - ev.clientY;
 
+  
   canvas.onmouseup = function(ev) {
     //collect mouse up info
     upX = ev.clientX;
@@ -395,11 +396,10 @@ function clickS(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); 
     gl.uniform1i(u_Clicked,0);
     var isYellow = (pixels[0]==255 && pixels[1]==229 && pixels[2]==0);
-    console.log("pixels", pixels);
+
     //click(not drag)
     if(Math.abs(downX-upX)<5 && Math.abs(downY-upY)<5) { 
       if(isYellow){
-        console.log("clicked yellow in Select mode");
         light = (light+1) % 2;
       }
       else {
@@ -443,22 +443,29 @@ function setTransMatrix(downX, downY, upX, upY, btn, l) {
 * upX       :: x-coord of mouse up event
 * upY       :: y-coord of mouse up event
 * btn       :: 0,1,2 for left,middle,right OR a multiple of 120 for scrolling
+* l         :: 0 if transforming selected tree, 1 for transforming light
 *
 * Functionality:
 * --------------
 * - Determines type of transformation from mouse data
-* - Updates cumulative matrix in matrices[] with new transformation 
+* - Updates cumulative matrix in matrices[] with new transformation if l == 0
+* - Updates sphereMatrix with new transformation if l == 1
 *
 * Outcome:
 * --------
-* Updates the selected tree's matrix depending on mouse events (if select && flat-shading mode)
+* Updates the selected tree's matrix or light matrix depending on mouse events
 */
-  if(selected==0) {
-    return;
+  var cMatrix = new Matrix4();
+
+  if(l==0){
+    if(selected==0){return;}
+    cMatrix.set(matrices[selected-1]);
+
+  }
+  else {
+    cMatrix.set(sphereMatrix);
   }
   
-  var cMatrix = new Matrix4();
-  cMatrix.set(matrices[selected-1]);
   
   
   var invMatrix = new Matrix4();
@@ -494,21 +501,31 @@ function setTransMatrix(downX, downY, upX, upY, btn, l) {
   //scaling
   else {
     console.log("scaling", btn);
-    var sFactor = 1 + (0.1*btn/120);
+    var sFactor = 1 + (0.03*btn/120);
     if(g_points[selected-1][4]*sFactor>=0.5 || g_points[selected-1][4]<=2){
       g_points[selected-1][4]*=sFactor;
       newMatrix.scale(sFactor, sFactor, sFactor);
     }
   }
 
-  //return to origin
-  matrices[selected-1].multiply(invMatrix);
-  matrices[selected-1].translate(-(SpanX*g_points[selected-1][0]),-(SpanY*g_points[selected-1][1]),0);
+  if(l==0) {
+    //return to origin
+    matrices[selected-1].multiply(invMatrix);
+    matrices[selected-1].translate(-(SpanX*g_points[selected-1][0]),-(SpanY*g_points[selected-1][1]),0);
 
-  
-  matrices[selected-1].multiply(newMatrix);
-  matrices[selected-1].multiply(cMatrix);
-  matrices[selected-1].translate((SpanX*g_points[selected-1][0]),(SpanY*g_points[selected-1][1]),0);
+    //apply new transformation
+    matrices[selected-1].multiply(newMatrix);
+    matrices[selected-1].multiply(cMatrix);
+    matrices[selected-1].translate((SpanX*g_points[selected-1][0]),(SpanY*g_points[selected-1][1]),0);
+  }
+  else{
+    //return to origin
+    sphereMatrix.multiply(invMatrix);
+
+    //apply new transformation
+    sphereMatrix.multiply(newMatrix);
+    sphereMatrix.multiply(cMatrix);
+  }
 
 }
 
