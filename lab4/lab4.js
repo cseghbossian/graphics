@@ -331,24 +331,17 @@ function clickC(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
       }
     }
     else { //not yellow
-
       if (mode == 0) { //if in shaded mode, add tree
         var tmatrix = new Matrix4();
         matrices.push(tmatrix);
-        if (btn==1) {
-          btn=0;
-        }
+        if (btn==1) {btn=0;}
         g_points.push([x, y, btn, ++id, 1]);
-
       }
 
     }
     draw(gl, u_MvpMatrix);
   }
 
-
-
-  
 }
 
 //Click in select mode
@@ -390,35 +383,48 @@ function clickS(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
     upX = ev.clientX;
     upY = ev.clientY;
 
+    // Read pixels at click location
+    gl.uniform1i(u_Clicked,1);
+    draw(gl, u_MvpMatrix);
+    var pixels = new Uint8Array(4);
+    gl.readPixels(x_in_canvas, y_in_canvas, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+    idx = Math.round(pixels[0]/5);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); 
+    gl.uniform1i(u_Clicked,0);
+    var isYellow = (pixels[0]>0 && pixels[1]>0 && pixels[2]==0);
+    
     //click(not drag)
     if(Math.abs(downX-upX)<5 && Math.abs(downY-upY)<5) { 
-      // Read pixels at click location
-      gl.uniform1i(u_Clicked,1);
-      draw(gl, u_MvpMatrix);
-      var pixels = new Uint8Array(4);
-      gl.readPixels(x_in_canvas, y_in_canvas, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-      idx = Math.round(pixels[0]/5);
-      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); 
-      gl.uniform1i(u_Clicked,0);
-
-      //select
-      if (selected == 0) { //if no selected tree
-        if(pixels[0] != 0) { //if clicking on tree for selection
-          g_points[(idx-1)][2]++;
-          selected = idx;
+      if(pixels[0]>0 && pixels[1]>0 && pixels[2]==0){
+        light = (light+1) % 2;
+        console.log("clicking the yellowwwwww");
+      }
+      else {
+        //select
+        if (selected == 0) { //if no selected tree
+          if(pixels[0] != 0) { //if clicking on tree for selection
+            g_points[(idx-1)][2]++;
+            selected = idx;
+          }
+        }
+        //deselect
+        else { //if there is selected tree
+          if (pixels[0] == 0) { //if pressing on white
+            g_points[(selected-1)][2]--; 
+            selected = 0;
+          }
         }
       }
-      //deselect
-      else { //if there is selected tree
-        if (pixels[0] == 0) { //if pressing on white
-          g_points[(selected-1)][2]--; 
-          selected = 0;
-        }
-      }
-    } 
+    }
     //drag
     else{
-      if(clickMode==1){
+      if(pixels[0]>0 && pixels[1]>0 && pixels[2]==0){
+        //transform light
+        console.log("dragging light");
+        setTransMatrix(downX, downY, upX, upY, btn, 1);
+      }
+      else if(!isYellow && clickMode==1){
+        //transform selected tree
         setTransMatrix(downX, downY, upX, upY, btn, 0);
       }
     }
