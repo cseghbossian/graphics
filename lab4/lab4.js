@@ -305,8 +305,8 @@ function clickC(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
 	var downY = ev.clientY; // y coordinate of a mouse pointer
 	var rect = ev.target.getBoundingClientRect();
 	var btn = ev.button;
-	downX = ((downX - rect.left) - canvas.width/2)/(canvas.width/2);
-  downY = (canvas.height/2 - (downY - rect.top))/(canvas.height/2);
+	var x = ((downX - rect.left) - canvas.width/2)/(canvas.width/2);
+  var y = (canvas.height/2 - (downY - rect.top))/(canvas.height/2);
   var x_in_canvas = ev.clientX - rect.left, y_in_canvas = rect.bottom - ev.clientY;
 
   gl.uniform1i(u_Clicked,1);
@@ -338,17 +338,17 @@ function clickC(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
         if (btn==1) {
           btn=0;
         }
-        g_points.push([downX, downY, btn, ++id, 1]);
+        g_points.push([x, y, btn, ++id, 1]);
 
       }
 
     }
-
+    draw(gl, u_MvpMatrix);
   }
 
 
 
-  draw(gl, u_MvpMatrix);
+  
 }
 
 //Click in select mode
