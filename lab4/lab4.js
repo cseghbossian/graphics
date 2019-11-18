@@ -4,26 +4,35 @@
 
 // Vertex shader program
 var VSHADER_SOURCE =
-  'attribute vec4 a_Position;\n' +
-  'attribute vec4 a_Normal;\n' +        // Normal
-  'uniform vec4 u_Translation;\n' +
-  'uniform mat4 m_Transformation;\n' +
-  'uniform vec4 u_Color;\n' +
-  'uniform vec4 u_idColor;\n' +  
-  'uniform vec3 u_Kd;\n' +     // Light color
-  'uniform vec3 u_LightDirection;\n' + // Light direction (in the world coordinate, normalized)
-  'uniform mat4 u_MvpMatrix;\n' +
-  'uniform bool u_Clicked;\n' + // Mouse is pressed
-  'uniform bool u_LightOn;\n' +
-  'varying vec4 v_Color;\n' +
+  'attribute vec4 a_Position;\n' +       // Position of point
+  'attribute vec4 a_Normal;\n' +         // Normal
+  'uniform vec4 u_Translation;\n' +      // Translation vector for click in g_points
+  'uniform mat4 m_Transformation;\n' +   // Transformation matrix
+  'uniform vec4 u_Color;\n' +            // Color of surface
+  'uniform vec4 u_idColor;\n' +          // Unique color of tree for calling readPixels
+  'uniform vec3 u_Kd_1;\n' +             // white light color
+  'uniform vec3 u_LightDirection_1;\n' + // Light direction (in the world coordinate, normalized)
+  'uniform mat4 u_MvpMatrix;\n' +        // View matrix
+  'uniform bool u_Clicked;\n' +          // Mouse is pressed
+  'uniform bool u_LightOn;\n' +          // Light is on
+  'varying vec4 v_Color;\n' +            // Final color of vertex to be passed to frag shader
 
   'void main() {\n' +
+  //Diffuse Calculations
+  '  vec3 u_Kd_2 = vec3(0.5,0.5,1.0);\n' + // bluish orb light color
+  '  vec4 u_LightDirection_2 = (m_Transformation * vec4(0,0,0,0);\n' + // Light direction from Orb
   '  gl_Position = u_MvpMatrix * m_Transformation * (a_Position + u_Translation);\n' +  
   '  vec3 normal = normalize(a_Normal.xyz);\n' +
-  '  float lambertian = max(dot(u_LightDirection, normal), 0.0);\n' + //Lambertian
-  '  vec3 diffuse = u_Kd * u_Color.rgb * lambertian;\n' +	
-  '  float specular = 0.0;\n' +
-  '  vec3 u_Ks = u_Kd;\n' +
+  '  float lambertian_1 = max(dot(u_LightDirection_1, normal), 0.0);\n' + 
+  '  float lambertian_2 = max(dot(u_LightDirection_2.xyz, normal), 0.0);\n' + 
+  '  vec3 diffuse_1 = u_Kd_1 * u_Color.rgb * lambertian_1;\n' +	
+  '  vec3 diffuse_2 = u_Kd_2 * u_Color.rgb * lambertian_2;\n' +
+
+  //Specular Calculations
+  '  float specular_1 = 0.0;\n' +
+  '  float specular_2 = 0.0;\n' +
+  '  vec3 u_Ks_1 = u_Kd_1;\n' +
+  '  vec3 u_Ks_2 = u_Kd_2;\n' +
   '  float shine = 0.0;\n' +
   '  if (u_Color.r > 0.0) {\n' +
   '    shine = 8.0;\n' +
@@ -31,13 +40,21 @@ var VSHADER_SOURCE =
   '  else {\n' +
   '    shine = 20.0;\n' +
   '  }\n' +
-  '  if(lambertian > 0.0) {\n' +
-  '    vec3 R = reflect(-u_LightDirection, normal);\n' +      // Reflected light vector
+  '  if(lambertian_1 > 0.0) {\n' +
+  '    vec3 R_1 = reflect(-u_LightDirection_1, normal);\n' +      // Reflected light vector
   '    vec3 V = normalize(-gl_Position.xyz);\n' + 
-  '    float specAngle = dot(R, V);\n' +
-  '    specular = pow(specAngle, shine);\n' +
+  '    float specAngle_1 = dot(R_1, V);\n' +
+  '    specular_1 = pow(specAngle_1, shine);\n' +
   '  }\n' +
-  '  vec3 spec = u_Ks * specular * vec3(1,1,1); \n' +
+  '  if(lambertian_2 > 0.0) {\n' +
+  '    vec3 R_2 = reflect(-u_LightDirection_2.xyz, normal);\n' +      // Reflected light vector
+  '    vec3 V = normalize(-gl_Position.xyz);\n' + 
+  '    float specAngle_2 = dot(R_2, V);\n' +
+  '    specular_1 = pow(specAngle_2, shine);\n' +
+  '  }\n' +
+  '  vec3 spec_1 = u_Ks_1 * specular_1 * vec3(1,1,1); \n' +
+  '  vec3 spec_2 = u_Ks_2 * specular_2 * vec3(0.5,0.5,1.0); \n' +
+
 	'  if (u_Color.a == 1.0) {\n' +
 	'  	if (u_Clicked) {\n' + // Temporarily draw in red if mouse is pressed
 	'    	v_Color = u_idColor;\n' +
@@ -46,8 +63,11 @@ var VSHADER_SOURCE =
   '     if (u_LightOn && u_Color.g==0.9) {\n' +
   '       v_Color = vec4(0,0,0,1);\n' +
   '  	  }\n' +
+  '     else if(u_LightOn){\n' +
+  '    	  v_Color = vec4(diffuse_1+spec_1+diffuse_2+spec_2, u_Color.a);\n' +
+  '  	  }\n' +
   '     else {\n' +
-	'    	  v_Color = vec4(diffuse+spec, u_Color.a);\n' +
+	'    	  v_Color = vec4(diffuse_1+spec_1, u_Color.a);\n' +
 	'  	}}}\n' +
 	// Wireframe color
 	'  else\n' +
@@ -202,19 +222,19 @@ function main() {
   gl.enable(gl.DEPTH_TEST);
 
   // Get the storage locations of u_ViewMatrix and u_ProjMatrix variables and u_Translate
-  var u_Kd = gl.getUniformLocation(gl.program, 'u_Kd');
-  var u_LightDirection = gl.getUniformLocation(gl.program, 'u_LightDirection');
-  if (!u_Kd || !u_LightDirection) { 
+  var u_Kd_1 = gl.getUniformLocation(gl.program, 'u_Kd_1');
+  var u_LightDirection_1 = gl.getUniformLocation(gl.program, 'u_LightDirection_1');
+  if (!u_Kd_1 || !u_LightDirection_1) { 
     console.log('Failed to get uniform variable(s) storage location');
     return;
   }
   
    // Set the light color (white)
-  gl.uniform3f(u_Kd, 1.0, 1.0, 1.0);
+  gl.uniform3f(u_Kd_1, 1.0, 1.0, 1.0);
   // Set the light direction (in the world coordinate)
   var lightDirection = new Vector3([.5, 1.2, 1.2]);
   lightDirection.normalize();     // Normalize
-  gl.uniform3fv(u_LightDirection, lightDirection.elements);
+  gl.uniform3fv(u_LightDirection_1, lightDirection.elements);
 
   // Get the storage location of u_MvpMatrix
   var u_MvpMatrix = gl.getUniformLocation(gl.program, 'u_MvpMatrix');
