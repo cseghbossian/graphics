@@ -1,16 +1,19 @@
 <!--
   Celine Seghbossian <cseghbos@ucsc.edu>
-  CSE 160 -- Program 3
-  Sunday, November 10, 2019
+  CSE 160 -- Lab 4
+  Sunday, November 17, 2019
 
   List of Files:
 
-  /prog3
-    prog3.js
+  /lab4
+    lab4.js
     driver.html 
     features.html (this file)
     output1.jpg
     output2.jpg
+    output3.jpg
+    output4.jpg
+    output5.jpg
 
 -->
 
@@ -18,138 +21,74 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Celine Seghbossian's Program #3 Submission</title>
+    <title>Celine Seghbossian's Lab 4 Submission</title>
   </head>
 
   <body>
   <p>
     Celine Seghbossian<br>
     Login: cseghbos@ucsc.edu<br>
-    CSE 160 -- Program #3<br>
-    Sunday, November 10, 2019<br>
+    CSE 160 -- Lab 4<br>
+    Sunday, November 17, 2019<br>
   </p>
   <p>
     List of Files:<br>
-    /prog3/<br>
-    &nbsp;	prog3.js<br>
+    /lab4/<br>
+    &nbsp;	lab4.js<br>
     &nbsp;	driver.html <br>
     &nbsp;	features.html (this file)<br>
     &nbsp; output1.jpg<br>
     &nbsp; output2.jpg<br>
+    &nbsp; output3.jpg<br>
+    &nbsp; output4.jpg<br>
+    &nbsp; output5.jpg<br>
 
   </p>
   <span style="display:inline-block; width: 800px;">
-    This program implements the functionality as specified by Program #3 specifications. There are bugs as described below.
+    This program implements the functionality as specified by Lab #4 specifications. There are bugs as described below.
       <br>
     <ul>
 
-      <li>
-        <b>Object vs world coordinates.</b>
-        Each object is defined in its own coordinate system.
-        This is referred to as the object coordinate.
-        Objects are placed in the world coordinate system via a series
-        of transformations.
-        In our case, it's where you clicked on the canvas to plant the tree in the first place.
-        When an object is first created,
-        you need to keep track of its extents in its object coordinate system.
-        The extent refers to the range of x,y,z values when the object
-        is centered at the origin.
-        The object center is simply the average of all the object vertices.
-        Any transformations on an object is relative to this configuration.
+      <H3>
+        Description:
+        </H3>
+        
+        Up until now, we had a white directional light source coming from [1,1,1].
+        For this assignment, 
+        you will add a <b>point light source</b>.
+        This light source casts a bluish hue (0.5,0.5,1)
+        and its initial location is at (0, -100, 100).
+        This light source is also represented by a yellow sphere with radius = 5.
+        Like the directional light source, this point light source is turned on by default.
         
         <p>
-        Assume your world is contained within a 1001 x 1001 x 1001 cube.
-        Set your world coordinate system so that the origin
-        is at the center of a (500, 500, 0).
+        Allow the user to turn this light on or off by clicking on the yellow sphere
+        (as opposed to clicking on a toggle button).
+        Note that the yellow sphere is lit only by the directional light.
+        All other objects in the scene are lit by both light sources if the point
+        light source is turned on, otherwise they are lit only by the directional light.
         
-        <li>
-        <b>Picking a tree for transformation.</b>
-        Picking is done by left clicking on an tree.
-        You can pick on any tree that's currently visible.
-        You indicate that a tree has been picked by changing its color to green.
-        You deselect an object by left clicking on the background.
-        (To distinguish this action from creating a new tree,
-        deselection happens only when there's a tree that's been picked.
-        Also, only one tree can be picked at any time).
-        Doing so will revert the color of the picked object back to its original color.
-        Only one object can be picked at any time.
-        If you click on another object while you currently have a picked object,
-        nothing happens.
-        If you want to pick a different tree, you'll have to deselect the current tree first. An example code for this functionality is given here in this <a href="https://users.soe.ucsc.edu/~pang/160/f19/prog3/Program2wPick">
-        link</a>.
-        
-        <li>
-        <b>Scaling.</b>
-        Scaling is applied to the picked object.
-        If there's no picked object, then the following is a no-op.
-        Scaling is achieved by turning the scroll wheel (find a mouse with a scroll
-        wheel if you're using your laptop to do development).
-        Scrolling up will increase the object, while scrolling down will decrease the object.
-        Scaling is done uniformly on x,y,z dimensions.
-        Scaling is specified with respect to the object coordinate system.
-        Any single scaling operation can be up to 0.5 to 2 times its previous size.
-        Scaling is cumulative.
-        
-        <li>
-        <b>Translation.</b>
-        Translation is applied to the picked object.
-        If there's no picked object, then the following is a no-op.
-        Translation is specified with respect to the world coordinate system.
-        2D movements on the image plane is specified by
-        using the left button in conjunction with mouse movement.
-        The displacement between a left mouse down event and the left mouse up event indicates
-        the amount of movement to be applied to the picked object.
-        To specify a movement in the world z direction,
-        the vertical displacement between the middle mouse down event and the middle mouse up
-        event is used.
-        
-        <li>
-        <b>Rotation.</b>
-        Rotation is applied to the picked object.
-        If there's no picked object, then the following is a no-op.
-        Rotation is specified with respect to the object coordinate system.
-        The user indicates rotation by using the right button in conjunction with
-        the mouse movement.
-        A right mouse down with horizontal motion (displacement in x is much larger
-        than displacement in y) until a mouse up event
-        indicates a rotation about the z-axis of the object which should also align with the world z-axis
-        (but not of the screen, you'll see why in Prog 4).
-        A right mouse down with a vertical motion until a mouse up event
-        indicates a rotation about the x-axis of the object.
-        This might be useful to model trees growing at an angle.
-        You are not required to do a rotation about the object's y-axis.
         <p>
-        A potential source of confusion is the use of different coordinate systems.
-        Transformations are carried out with respect to a coordinate system.
-        Pay attention to the required coordinate system for the different transformations above.
+        <b>Moving light source.</b>
+        Allow the yellow sphere to be translated.
+        Use the same controls that you used for translating trees in Prog 3.
+        As the yellow sphere is moved around, you should also update the lighting of
+        all the objects in the scene.
         
-        <li>
-        <b>Cumulative transformations?</b>
-        Successive transformations on an object is always relative to the object's
-        most recent configuration.
-        For example, if I translate an tree then I scale it,
-        the scaling will change the size of the tree <b>in-place</b>
-        and not relative to the origin.
-        That is, the scaled tree will still be at the translated position,
-        but scaled to the new size.
-        Likewise, if I apply a rotation to the tree as my next transformation,
-        the rotation is applied relative to the tree's axes at its current location in
-        the world coordinate system.
-        A typical way of handling this is to store the cumulative transformations
-        to an tree in a matrix.
-        Apply the inverse of this matrix before applying the latest transformation.
-        And update the cumulative matrix with the latest transformation.
-        Each object will have its own cumulative transformation matrix.
+        <p>
+        Lighting should include both diffuse and specular reflections.
+        The rendering mode can be adjusted as before by cycling through the different options.
 
-        <li>
-        <b>BUGS</b><br>
-        - Perspective view is not perfect and clips some trees.<br>
-        - Although the cumulative matrix were multiplied by its inverse before adding another transformation, some of the behavior is erratic.
-        This is seen in the z-rotations and scaling, neither of which happen in place.
+        <H3>
+        Bugs:<br>
+        </H3>
+        - Although the cumulative matrix was multiplied by its inverse before adding another transformation, some of the behavior is erratic.
+        This is seen in the z-rotations and scaling, neither of which happen in-place.<br><br>
+        - While the sphere itself is able to move, the point light stays at the initial position. <br><br>
+        - If you're reading this, please go easy on me :(
         
-        </ul>
             
-        For more information on implementation, please reference function descriptions in prog3.js<br><br>
+        For more information on implementation, please reference function descriptions in lab4.js<br><br>
 
 
         
@@ -160,6 +99,9 @@
     <a href="driver.html">driver.html</a><br>
     <img src="output1.jpg" width = "800"><br>
     <img src="output2.jpg" width = "800"><br>
+    <img src="output3.jpg" width = "800"><br>
+    <img src="output4.jpg" width = "800"><br>
+    <img src="output5.jpg" width = "800"><br>
 
   </body>
 </html>
