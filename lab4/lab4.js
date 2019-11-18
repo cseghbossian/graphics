@@ -18,6 +18,7 @@ var VSHADER_SOURCE =
   'varying vec4 v_Color;\n' +            // Final color of vertex to be passed to frag shader
 
   'void main() {\n' +
+  
   //Diffuse Calculations
   '  vec3 u_Kd_2 = vec3(0.5,0.5,1.0);\n' + // bluish orb light color
   '  vec3 u_LightDirection_2 = vec3(-0.5,-0.5,0);\n' + // Light direction from Orb
