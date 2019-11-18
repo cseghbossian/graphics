@@ -14,17 +14,17 @@ var VSHADER_SOURCE =
   'uniform vec3 u_LightDirection_1;\n' + // Light direction (in the world coordinate, normalized)
   'uniform mat4 u_MvpMatrix;\n' +        // View matrix
   'uniform bool u_Clicked;\n' +          // Mouse is pressed
-  'uniform bool u_LightOn;\n' +          // Light is on
+  'uniform bool u_LightOff;\n' +          // Light is off
   'varying vec4 v_Color;\n' +            // Final color of vertex to be passed to frag shader
 
   'void main() {\n' +
   //Diffuse Calculations
   '  vec3 u_Kd_2 = vec3(0.5,0.5,1.0);\n' + // bluish orb light color
-  '  vec4 u_LightDirection_2 = (m_Transformation * vec4(0,0,0,0);\n' + // Light direction from Orb
+  '  vec3 u_LightDirection_2 = vec3(-0.5,-0.5,0);\n' + // Light direction from Orb
   '  gl_Position = u_MvpMatrix * m_Transformation * (a_Position + u_Translation);\n' +  
   '  vec3 normal = normalize(a_Normal.xyz);\n' +
   '  float lambertian_1 = max(dot(u_LightDirection_1, normal), 0.0);\n' + 
-  '  float lambertian_2 = max(dot(u_LightDirection_2.xyz, normal), 0.0);\n' + 
+  '  float lambertian_2 = max(dot(u_LightDirection_2, normal), 0.0);\n' + 
   '  vec3 diffuse_1 = u_Kd_1 * u_Color.rgb * lambertian_1;\n' +	
   '  vec3 diffuse_2 = u_Kd_2 * u_Color.rgb * lambertian_2;\n' +
 
@@ -47,23 +47,23 @@ var VSHADER_SOURCE =
   '    specular_1 = pow(specAngle_1, shine);\n' +
   '  }\n' +
   '  if(lambertian_2 > 0.0) {\n' +
-  '    vec3 R_2 = reflect(-u_LightDirection_2.xyz, normal);\n' +      // Reflected light vector
+  '    vec3 R_2 = reflect(-u_LightDirection_2, normal);\n' +      // Reflected light vector
   '    vec3 V = normalize(-gl_Position.xyz);\n' + 
   '    float specAngle_2 = dot(R_2, V);\n' +
   '    specular_1 = pow(specAngle_2, shine);\n' +
   '  }\n' +
   '  vec3 spec_1 = u_Ks_1 * specular_1 * vec3(1,1,1); \n' +
-  '  vec3 spec_2 = u_Ks_2 * specular_2 * vec3(0.5,0.5,1.0); \n' +
+  '  vec3 spec_2 = u_Ks_2 * specular_2 * u_Kd_2; \n' +
 
 	'  if (u_Color.a == 1.0) {\n' +
 	'  	if (u_Clicked) {\n' + // Temporarily draw in red if mouse is pressed
 	'    	v_Color = u_idColor;\n' +
   '  	}\n' +
   '   else {\n' +
-  '     if (u_LightOn && u_Color.g==0.9) {\n' +
+  '     if (u_LightOff && u_Color.g==0.9) {\n' +
   '       v_Color = vec4(0,0,0,1);\n' +
   '  	  }\n' +
-  '     else if(u_LightOn){\n' +
+  '     else if(!u_LightOff){\n' +
   '    	  v_Color = vec4(diffuse_1+spec_1+diffuse_2+spec_2, u_Color.a);\n' +
   '  	  }\n' +
   '     else {\n' +
@@ -581,12 +581,12 @@ function draw(gl, u_MvpMatrix) {
 * Draws each tree stored in g_points by calling drawTree(...)
 */
 
-  var u_LightOn = gl.getUniformLocation(gl.program, 'u_LightOn');
-  if (!u_LightOn) {
-    console.log('Failed to get the storage location of u_LightOn');
+  var u_LightOff = gl.getUniformLocation(gl.program, 'u_LightOff');
+  if (!u_LightOff) {
+    console.log('Failed to get the storage location of u_LightOff');
     return;
   }
-  gl.uniform1i(u_LightOn,light);
+  gl.uniform1i(u_LightOff,light);
 
 	setViewMatrix(gl, u_MvpMatrix);
   drawOrb(gl);
