@@ -17,9 +17,6 @@ var VSHADER_SOURCE =
   'uniform bool u_LightOn;\n' +
   'varying vec4 v_Color;\n' +
 
-  'uniform float Ks;\n' +   // Specular reflection coefficient
-  'uniform vec3 lightPos;\n' + // Light position
-
   'void main() {\n' +
   '  gl_Position = u_MvpMatrix * m_Transformation * (a_Position + u_Translation);\n' +  
   '  vec3 normal = normalize(a_Normal.xyz);\n' +
@@ -28,8 +25,8 @@ var VSHADER_SOURCE =
   '  float specular = 0.0;\n' +
   '  vec3 u_Ks = u_Kd;\n' +
   '  float shine = 0.0;\n' +
-  '  if (u_Color.r == 1.0) {\n' +
-  '    shine = 5.0;\n' +
+  '  if (u_Color.r > 0.0) {\n' +
+  '    shine = 8.0;\n' +
   '  }\n' +
   '  else {\n' +
   '    shine = 20.0;\n' +
@@ -79,9 +76,13 @@ var id = 0;                       // Counter for tree arrays
 var selected = 0;                 // Id of selected tree
 
 var aspectRatio = 1.5;
-var SpanX = 500 * aspectRatio;
-var SpanY = 500;
-var g_EyeX = 0.0, g_EyeY = 0.0, g_EyeZ = 1000.0; // Eye position
+var SpanX = 400 * aspectRatio;
+var SpanY = 400;
+var g_EyeX = 0.0, g_EyeY = 0.0, g_EyeZ = 800.0; // Eye position
+
+// var SpanX = 500 * aspectRatio;
+// var SpanY = 500;
+// var g_EyeX = 0.0, g_EyeY = 0.0, g_EyeZ = 1000.0; // Eye position
 
 function main() {
 /*
@@ -211,7 +212,7 @@ function main() {
    // Set the light color (white)
   gl.uniform3f(u_Kd, 1.0, 1.0, 1.0);
   // Set the light direction (in the world coordinate)
-  var lightDirection = new Vector3([1, 1, 1]);
+  var lightDirection = new Vector3([.5, 1.2, 1.2]);
   lightDirection.normalize();     // Normalize
   gl.uniform3fv(u_LightDirection, lightDirection.elements);
 
