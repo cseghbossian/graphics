@@ -1,6 +1,5 @@
-// Program3 
-// prog3.js by Celine Seghbossian
-// Base code taken from CylTree.js by Fahim Hasan Knan
+// Lab4
+// lab4.js by Celine Seghbossian
 
 
 // Vertex shader program
@@ -11,27 +10,47 @@ var VSHADER_SOURCE =
   'uniform mat4 m_Transformation;\n' +
   'uniform vec4 u_Color;\n' +
   'uniform vec4 u_idColor;\n' +  
-  'uniform vec3 u_LightColor;\n' +     // Light color
+  'uniform vec3 u_Kd;\n' +     // Light color
   'uniform vec3 u_LightDirection;\n' + // Light direction (in the world coordinate, normalized)
   'uniform mat4 u_MvpMatrix;\n' +
   'uniform bool u_Clicked;\n' + // Mouse is pressed
   'uniform bool u_LightOn;\n' +
   'varying vec4 v_Color;\n' +
+
+  'uniform float Ks;\n' +   // Specular reflection coefficient
+  'uniform vec3 lightPos;\n' + // Light position
+
   'void main() {\n' +
   '  gl_Position = u_MvpMatrix * m_Transformation * (a_Position + u_Translation);\n' +  
   '  vec3 normal = normalize(a_Normal.xyz);\n' +
-  '  float nDotL = max(dot(u_LightDirection, normal), 0.0);\n' + //Lambertian
-	'  vec3 diffuse = u_LightColor * u_Color.rgb * nDotL;\n' +	
-	'  if (u_Color.a == 1.0){\n' +
+  '  float lambertian = max(dot(u_LightDirection, normal), 0.0);\n' + //Lambertian
+  '  vec3 diffuse = u_Kd * u_Color.rgb * lambertian;\n' +	
+  '  float specular = 0.0;\n' +
+  '  vec3 u_Ks = u_Kd;\n' +
+  '  float shine = 0.0;\n' +
+  '  if (u_Color.r == 1.0) {\n' +
+  '    shine = 5.0;\n' +
+  '  }\n' +
+  '  else {\n' +
+  '    shine = 20.0;\n' +
+  '  }\n' +
+  '  if(lambertian > 0.0) {\n' +
+  '    vec3 R = reflect(-u_LightDirection, normal);\n' +      // Reflected light vector
+  '    vec3 V = normalize(-gl_Position.xyz);\n' + 
+  '    float specAngle = dot(R, V);\n' +
+  '    specular = pow(specAngle, shine);\n' +
+  '  }\n' +
+  '  vec3 spec = u_Ks * specular * vec3(1,1,1); \n' +
+	'  if (u_Color.a == 1.0) {\n' +
 	'  	if (u_Clicked) {\n' + // Temporarily draw in red if mouse is pressed
 	'    	v_Color = u_idColor;\n' +
   '  	}\n' +
   '   else {\n' +
-  '     if (u_LightOn && u_Color.g==0.9){\n' +
+  '     if (u_LightOn && u_Color.g==0.9) {\n' +
   '       v_Color = vec4(0,0,0,1);\n' +
   '  	  }\n' +
   '     else {\n' +
-	'    	  v_Color = vec4(diffuse, u_Color.a);\n' +
+	'    	  v_Color = vec4(diffuse+spec, u_Color.a);\n' +
 	'  	}}}\n' +
 	// Wireframe color
 	'  else\n' +
@@ -182,15 +201,15 @@ function main() {
   gl.enable(gl.DEPTH_TEST);
 
   // Get the storage locations of u_ViewMatrix and u_ProjMatrix variables and u_Translate
-  var u_LightColor = gl.getUniformLocation(gl.program, 'u_LightColor');
+  var u_Kd = gl.getUniformLocation(gl.program, 'u_Kd');
   var u_LightDirection = gl.getUniformLocation(gl.program, 'u_LightDirection');
-  if (!u_LightColor || !u_LightDirection) { 
+  if (!u_Kd || !u_LightDirection) { 
     console.log('Failed to get uniform variable(s) storage location');
     return;
   }
   
    // Set the light color (white)
-  gl.uniform3f(u_LightColor, 1.0, 1.0, 1.0);
+  gl.uniform3f(u_Kd, 1.0, 1.0, 1.0);
   // Set the light direction (in the world coordinate)
   var lightDirection = new Vector3([1, 1, 1]);
   lightDirection.normalize();     // Normalize
