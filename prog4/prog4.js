@@ -246,10 +246,21 @@ function main() {
       clickS(ev, gl, canvas, u_MvpMatrix, u_Clicked);
     }
   }
-  //scaling
+  //scrolling
   canvas.onmousewheel = function(ev) {
-    if(clickMode==1){
+    if(clickMode==1 && selected!=0){ //if selection mode
       setTransMatrix(0,0,0,0,ev.wheelDelta, 0);
+      draw(gl, u_MvpMatrix);
+    }
+    else {
+      console.log("zooming");
+      fov += 5 * (ev.wheelDelta/120);
+      if(fov <= 0) {
+        fov = 1;
+      }
+      else if (fov >= 90) {
+        fov = 89;
+      }
       draw(gl, u_MvpMatrix);
     }
   }
@@ -365,23 +376,23 @@ function clickC(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
       }
     }
     else { //not yellow 
-      if (mode == 0) { //if in shaded mode
-        if(Math.abs(downX-upX)<5 && Math.abs(downY-upY)<5) { //if click
-          var tmatrix = new Matrix4();
-          matrices.push(tmatrix);
-          if (btn==1) {btn=0;}
-          g_points.push([x, y, btn, ++id, 1]);
+      if (mode != 0) { //if in wireframe mode
+        return;
+      }
+      if(Math.abs(downX-upX)<5 && Math.abs(downY-upY)<5) { //if click
+        var tmatrix = new Matrix4();
+        matrices.push(tmatrix);
+        if (btn==1) {btn=0;}
+        g_points.push([x, y, btn, ++id, 1]);
+      }
+      else { //if drag
+        if(btn==0 && selected == 0 && proj == 1){ //panning
+          console.log("panning");
+          g_EyeX += (downX-upX);
+          g_EyeY += (downY-upY);
+          setViewMatrix(gl, u_MvpMatrix);
         }
-        else { //if drag
-          if(btn==0 && selected == 0 && proj == 1){ //panning
-            console.log("panning");
-            g_EyeX += (downX-upX);
-            g_EyeY += (downY-upY);
-            setViewMatrix(gl, u_MvpMatrix);
-          }
-          
-        }
-
+        
       }
 
     }
@@ -472,7 +483,7 @@ function clickS(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
         //transform selected tree
         setTransMatrix(downX, downY, upX, upY, btn, 0);
       }
-      else if (btn==0 && proj==1){ // if no tree selected and click not yellow
+      else if (btn==0 && proj==1){ // if no tree selected and not yellow and left click and persp mode
         console.log("panning");
         g_EyeX += (downX-upX);
         g_EyeY += (downY-upY);
