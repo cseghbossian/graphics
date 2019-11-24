@@ -99,6 +99,7 @@ var selected = 0;                 // Id of selected tree
 var aspectRatio = 1.5;
 var SpanX = 400 * aspectRatio;
 var SpanY = 400;
+var fov = 45;
 var g_EyeX = 0.0, g_EyeY = 0.0, g_EyeZ = 800.0; // Eye position
 
 // var SpanX = 500 * aspectRatio;
@@ -136,16 +137,6 @@ function main() {
 
   /////////////////////DEBUG//////////////////////////////
 
-  // var M = new Matrix4();
-  // M.setScale(3,3,3);
-  // console.log(M);
-
-  // var MM = new Matrix4();
-  // MM.setScale(5,5,5);
-  // console.log(MM);
-
-  // M.multiply(MM);
-  // console.log(M);
 
   /////////////////////DEBUG//////////////////////////////
 
@@ -282,7 +273,7 @@ function setViewMatrix(gl, u_MvpMatrix){
     mvpMatrix.lookAt(g_EyeX, g_EyeY, g_EyeZ, 0, 0, 0, 0, 1, 0);	
 	}
 	else {
-    mvpMatrix.setPerspective(45, aspectRatio, 1, 2000);
+    mvpMatrix.setPerspective(fov, aspectRatio, 1, 2000);
     mvpMatrix.lookAt(g_EyeX, g_EyeY, g_EyeY+500, 0, 0, 0, 0, 1, 0);			
 	}
 		
@@ -360,7 +351,6 @@ function clickC(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); 
   gl.uniform1i(u_Clicked,0);
 
-  //draw(gl, u_MvpMatrix);
   canvas.onmouseup = function(ev){
     //collect mouse up info
     upX = ev.clientX;
@@ -374,12 +364,24 @@ function clickC(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
         setTransMatrix(downX, downY, upX, upY, btn, 1);
       }
     }
-    else { //not yellow
-      if (mode == 0) { //if in shaded mode, add tree
-        var tmatrix = new Matrix4();
-        matrices.push(tmatrix);
-        if (btn==1) {btn=0;}
-        g_points.push([x, y, btn, ++id, 1]);
+    else { //not yellow 
+      if (mode == 0) { //if in shaded mode
+        if(Math.abs(downX-upX)<5 && Math.abs(downY-upY)<5) { //if click
+          var tmatrix = new Matrix4();
+          matrices.push(tmatrix);
+          if (btn==1) {btn=0;}
+          g_points.push([x, y, btn, ++id, 1]);
+        }
+        else { //if drag
+          if(btn==0 && selected == 0 && proj == 1){ //panning
+            console.log("panning");
+            g_EyeX += (downX-upX);
+            g_EyeY += (downY-upY);
+            setViewMatrix(gl, u_MvpMatrix);
+          }
+          
+        }
+
       }
 
     }
@@ -466,9 +468,15 @@ function clickS(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
         //transform light
         setTransMatrix(downX, downY, upX, upY, btn, 1);
       }
-      else if(!isYellow && clickMode==1){
+      else if(selected!=0){
         //transform selected tree
         setTransMatrix(downX, downY, upX, upY, btn, 0);
+      }
+      else if (btn==0 && proj==1){ // if no tree selected and click not yellow
+        console.log("panning");
+        g_EyeX += (downX-upX);
+        g_EyeY += (downY-upY);
+        setViewMatrix(gl, u_MvpMatrix);
       }
     }
 
