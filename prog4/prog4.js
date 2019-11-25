@@ -239,6 +239,7 @@ function main() {
   canvas.onmousedown = function(ev){
     if(ev.button == 1){
       moveCam = 1;
+      canvas.onmouseup = function() {moveCam=0;}
     }
     else if(clickMode==0) {
       clickC(ev, gl, canvas, u_MvpMatrix, u_Clicked);
@@ -246,14 +247,17 @@ function main() {
     else {
       clickS(ev, gl, canvas, u_MvpMatrix, u_Clicked);
     }
+  
   }
 
   //scrolling
   canvas.onmousewheel = function(ev) {
+
     if(moveCam){
       console.log("moveCam");
+      
 
-      canvas.onmouseup = function(evv){
+      canvas.onmouseup = function(){
         console.log("mouse up");
         moveCam = 0;
       }
