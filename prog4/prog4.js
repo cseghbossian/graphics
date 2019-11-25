@@ -102,9 +102,6 @@ var SpanY = 400;
 var fov = 45;
 var g_EyeX = 0.0, g_EyeY = 0.0, g_EyeZ = 800.0; // Eye position
 
-// var SpanX = 500 * aspectRatio;
-// var SpanY = 500;
-// var g_EyeX = 0.0, g_EyeY = 0.0, g_EyeZ = 1000.0; // Eye position
 
 function main() {
 /*
@@ -237,18 +234,31 @@ function main() {
   }
   gl.uniform1i(u_Clicked, 0); // Pass false to u_Clicked
   // Register function (event handler) to be called on a mouse press
-
+  
+  var moveCam = 0;
   canvas.onmousedown = function(ev){
-    if(clickMode==0) {
+    if(ev.button == 1){
+      moveCam = 1;
+    }
+    else if(clickMode==0) {
       clickC(ev, gl, canvas, u_MvpMatrix, u_Clicked);
     }
     else {
       clickS(ev, gl, canvas, u_MvpMatrix, u_Clicked);
     }
   }
+
   //scrolling
   canvas.onmousewheel = function(ev) {
-    if(clickMode==1 && selected!=0){ //if selection mode
+    if(moveCam){
+      console.log("moveCam");
+
+      canvas.onmouseup = function(evv){
+        console.log("mouse up");
+        moveCam = 0;
+      }
+    }
+    else if(clickMode==1 && selected!=0){ //if selection mode
       setTransMatrix(0,0,0,0,ev.wheelDelta, 0);
       draw(gl, u_MvpMatrix);
     }
@@ -923,4 +933,15 @@ function drawCylinder(gl, x1, y1, z1, x2, y2, z2, d, xy) {
     gl.uniform4f(u_Color, 1.0, 0.0, 1.0, 0);
     gl.drawArrays(gl.LINES, 0, n);
   }
+}
+
+function moveCamera(canvas, gl, u_MvpMatrix){
+  console.log("moveCamera");
+  if(false){
+    canvas.onmousewheel = function(ev){
+      console.log("scrollclick", ev.wheelDelta);     
+      return; 
+    }
+  }
+  draw(gl, u_MvpMatrix);
 }
