@@ -100,7 +100,7 @@ var aspectRatio = 1.5;
 var SpanX = 400 * aspectRatio;
 var SpanY = 400;
 var fov = 45;
-var g_EyeX = 0.0, g_EyeY = 0.0, g_EyeZ = 800.0; // Eye position
+var g_EyeX = 0.0, g_EyeY = 0.0, g_EyeZ = 500.0; // Eye position
 
 
 function main() {
@@ -254,11 +254,18 @@ function main() {
   canvas.onmousewheel = function(ev) {
 
     if(moveCam){
-      console.log("moveCam");
-      
+      console.log("moving camera in/out");
+      g_EyeZ += 100 * (ev.wheelDelta/120);
+      if(g_EyeZ>2000){
+        g_EyeZ= 2000;
+      }
+      else if(g_EyeZ<100){
+        g_EyeZ = 100;
+      }
+      console.log(g_EyeZ);
+      draw(gl, u_MvpMatrix);
 
       canvas.onmouseup = function(){
-        console.log("mouse up");
         moveCam = 0;
       }
     }
@@ -295,11 +302,11 @@ function setViewMatrix(gl, u_MvpMatrix){
 	var mvpMatrix = new Matrix4();   // Model view projection matrix
 	if (proj == 0){
     mvpMatrix.setOrtho(-SpanX, SpanX, -SpanY, SpanY, -2000, 2000);
-    mvpMatrix.lookAt(g_EyeX, g_EyeY, g_EyeZ, 0, 0, 0, 0, 1, 0);	
+    mvpMatrix.lookAt(g_EyeX, g_EyeY, 800, 0, 0, 0, 0, 1, 0);	
 	}
 	else {
     mvpMatrix.setPerspective(fov, aspectRatio, 1, 2000);
-    mvpMatrix.lookAt(g_EyeX, g_EyeY, g_EyeY+500, 0, 0, 0, 0, 1, 0);			
+    mvpMatrix.lookAt(g_EyeX, g_EyeY, g_EyeZ, 0, 0, 0, 0, 1, 0);			
 	}
 		
 
@@ -937,15 +944,4 @@ function drawCylinder(gl, x1, y1, z1, x2, y2, z2, d, xy) {
     gl.uniform4f(u_Color, 1.0, 0.0, 1.0, 0);
     gl.drawArrays(gl.LINES, 0, n);
   }
-}
-
-function moveCamera(canvas, gl, u_MvpMatrix){
-  console.log("moveCamera");
-  if(false){
-    canvas.onmousewheel = function(ev){
-      console.log("scrollclick", ev.wheelDelta);     
-      return; 
-    }
-  }
-  draw(gl, u_MvpMatrix);
 }
