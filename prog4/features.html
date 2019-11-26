@@ -1,12 +1,12 @@
 <!--
   Celine Seghbossian <cseghbos@ucsc.edu>
-  CSE 160 -- Lab 4
-  Sunday, November 17, 2019
+  CSE 160 -- Program 4
+  Tuesday, November 26, 2019
 
   List of Files:
 
-  /lab4
-    lab4.js
+  /prog4
+    prog4.js
     driver.html 
     features.html (this file)
     output1.jpg
@@ -21,20 +21,23 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Celine Seghbossian's Lab 4 Submission</title>
+    <title>Celine Seghbossian's Program 4 Submission</title>
+    <style>
+      body {background-color: rgba(143, 229, 215, 0.747);}
+    </style>
   </head>
 
   <body>
   <p>
     Celine Seghbossian<br>
     Login: cseghbos@ucsc.edu<br>
-    CSE 160 -- Lab 4<br>
-    Sunday, November 17, 2019<br>
+    CSE 160 -- Program 4<br>
+    Tuesday, November 26, 2019<br>
   </p>
   <p>
     List of Files:<br>
-    /lab4/<br>
-    &nbsp;	lab4.js<br>
+    /prog4/<br>
+    &nbsp;	prog4.js<br>
     &nbsp;	driver.html <br>
     &nbsp;	features.html (this file)<br>
     &nbsp; output1.jpg<br>
@@ -44,51 +47,78 @@
     &nbsp; output5.jpg<br>
 
   </p>
-  <span style="display:inline-block; width: 800px;">
-    This program implements the functionality as specified by Lab #4 specifications. There are bugs as described below.
+  <span style="display:inline-block; width: 900px;">
+    This program implements the functionality as specified by Program #4 specifications. It also has most of the functionality
+    of the previous assignments. There are assumptions as described below.
       <br>
     <ul>
 
       <H3>
+        Objectives:
+        </H3>
+        
+        Add camera control.
+        
+        <! ================================================================== >
+        
+        <H3>
         Description:
         </H3>
         
-        Up until now, we had a white directional light source coming from [1,1,1].
-        For this assignment, 
-        you will add a <b>point light source</b>.
-        This light source casts a bluish hue (0.5,0.5,1)
-        and its initial location is at (0, -100, 100).
-        This light source is also represented by a yellow sphere with radius = 5.
-        Like the directional light source, this point light source is turned on by default.
+        Allow the user to change the viewpoint using GUI.
         
-        <p>
-        Allow the user to turn this light on or off by clicking on the yellow sphere
-        (as opposed to clicking on a toggle button).
-        Note that the yellow sphere is lit only by the directional light.
-        All other objects in the scene are lit by both light sources if the point
-        light source is turned on, otherwise they are lit only by the directional light.
         
-        <p>
-        <b>Moving light source.</b>
-        Allow the yellow sphere to be translated.
-        Use the same controls that you used for translating trees in Prog 3.
-        As the yellow sphere is moved around, you should also update the lighting of
-        all the objects in the scene.
+        <H3>
+        Details:
+        </H3>
+        <ul>
         
-        <p>
-        Lighting should include both diffuse and specular reflections.
-        The rendering mode can be adjusted as before by cycling through the different options.
+        <! --------------------------------->
+        
+        <li>
+        <b>Zooming.</b>
+        Allow the user to zoom in and out.  This is achieved by modifying the field-of-view (fov)
+        parameter in your perspective call.  Note that the camera position does not change.
+        To specify zooming, no objects must be selected.
+        <! (e.g. left click on the background to deselect any previously picked objects).>
+        Scrolling the wheel is then mapped to fov --
+        as the wheel is scrolled up, the fov is reduced thereby creating a zoom-in effect;
+        when the wheel is scrolled down, the fov is increased thereby creating a zoom-out effect.
+        
+        <li>
+        <b>Panning.</b>
+        Again with no objects selected,
+        when the user left clicks on the background and moves the mouse,
+        it will move the camera horizontally and vertically on XY-plane of the image plane
+        of current view.
+        Note that the image plane is not always aligned with the world coordinate frame
+        e.g. after the view has been rotated (see below).
+        Panning the camera produces an effect somewhat opposite
+        to what you saw with object translation.
+        For example, when the camera is panned to the right, objects appear to move to the left.
+        
+        <li>
+        <b>Move the camera in or out.</b>
+        This functionality allows the camera to be moved forward or backward along
+        its current view direction.
+        If the user clicks on the background with the
+        middle mouse and scrolls the wheel, it will move the camera in or out along the z-coordinate of
+        the viewing coordinate frame.
+        Unlike the zooming operation mentioned above, fov is unchanged,
+        but this will actually change the position of the camera.
+        
+        </ul>
+        
+        <! ======================================>
+        
 
         <H3>
         Bugs:<br>
         </H3>
-        - Although the cumulative matrix was multiplied by its inverse before adding another transformation, some of the behavior is erratic.
-        This is seen in the z-rotations and scaling, neither of which happen in-place.<br><br>
-        - While the sphere itself is able to move, the point light stays at the initial position. <br><br>
-        - If you're reading this, please go easy on me :(
-        
+        - In create mode, clicking on existing tree will turn point light on and off. <br>
+        - The point light sometimes does not move with the movement of the sphere. <br><br>
             
-        For more information on implementation, please reference function descriptions in lab4.js<br><br>
+        For more information on implementation, please reference function descriptions in prog4.js<br><br>
 
 
         
@@ -97,11 +127,12 @@
   
   <br> Link for grader: 
     <a href="driver.html">driver.html</a><br>
-    <img src="output1.jpg" width = "800"><br>
-    <img src="output2.jpg" width = "800"><br>
-    <img src="output3.jpg" width = "800"><br>
-    <img src="output4.jpg" width = "800"><br>
-    <img src="output5.jpg" width = "800"><br>
+    Moving Camera: <br>
+    <img src="output1.jpg" width = "400"> <img src="output2.jpg" width = "400"><br>
+    Zooming: <br>
+    <img src="output2.jpg" width = "400"> <img src="output3.jpg" width = "400"><br>
+    Panning: <br>
+    <img src="output4.jpg" width = "400"> <img src="output5.jpg" width = "400"> <br>
 
   </body>
 </html>

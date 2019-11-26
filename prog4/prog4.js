@@ -265,7 +265,6 @@ function main() {
       else if(g_EyeZ<100){
         g_EyeZ = 100;
       }
-      console.log(g_EyeZ);
       draw(gl, u_MvpMatrix);
 
       canvas.onmouseup = function(){
@@ -582,7 +581,6 @@ function setTransMatrix(downX, downY, upX, upY, btn, l) {
       sphere_data[0] += xdisp;
       sphere_data[1] += ydisp;
     }
-    console.log("xdisp ", xdisp, "ydisp", ydisp);
   }
   //translating along z
   else if(btn==1) {
