@@ -85,7 +85,8 @@ var FSHADER_SOURCE =
   '  gl_FragColor = v_Color;\n' +
   '}\n';
 
-var g_points = [];                // The array for the position of a mouse press
+
+var g_points = [];                // Info for each click.  g_points = [x,y,btn,id,z,s,alpha,beta]
 var matrices = [];                // The array of cumulative transformation matrices for trees
 var sphereMatrix = new Matrix4(); // The cumulative transformation matrix for sphere
 var light = 0;                    // Light on/off
@@ -346,8 +347,9 @@ function load() {
     var len = this.result.length;
     var data = this.result.slice(1, len);
     var xyb = data.split(',');
-    for (var i = 0; i < xyb.length; i=i+5) {
-      g_points.push(([parseFloat(xyb[i]), parseFloat(xyb[i+1]), parseFloat(xyb[i+2]), parseFloat(xyb[i+3]),parseFloat(xyb[i+4])]));
+    for (var i = 0; i < xyb.length; i=i+8) {
+      g_points.push(([parseFloat(xyb[i]), parseFloat(xyb[i+1]), parseFloat(xyb[i+2]), parseFloat(xyb[i+3]),
+                      parseFloat(xyb[i+4]),  parseFloat(xyb[i+5]), parseFloat(xyb[i+6]),parseFloat(xyb[i+7])]));
     }
   };	
 	console.log("g_points: ", g_points);
@@ -404,7 +406,7 @@ function clickC(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
         var tmatrix = new Matrix4();
         matrices.push(tmatrix);
         if (btn==1) {btn=0;}
-        g_points.push([x, y, btn, ++id, 1]);
+        g_points.push([x, y, 0, btn, ++id, 1, 0, 0]);
       }
       else { //if drag
         if(btn==0 && selected == 0 && proj == 1){ //panning
@@ -481,14 +483,14 @@ function clickS(ev, gl, canvas, u_MvpMatrix, u_Clicked) {
         //select
         if (selected == 0) { //if no selected tree
           if(pixels[0] != 0) { //if clicking on tree for selection
-            g_points[(idx-1)][2]++;
+            g_points[(idx-1)][3]++;
             selected = idx;
           }
         }
         //deselect
         else { //if there is selected tree
           if (pixels[0] == 0) { //if pressing on white
-            g_points[(selected-1)][2]--; 
+            g_points[(selected-1)][3]--; 
             selected = 0;
           }
         }
@@ -583,8 +585,8 @@ function setTransMatrix(downX, downY, upX, upY, btn, l) {
   else {
     console.log("scaling", btn);
     var sFactor = 1 + (0.03*btn/120);
-    if(g_points[selected-1][4]*sFactor>=0.5 || g_points[selected-1][4]<=2){
-      g_points[selected-1][4]*=sFactor;
+    if(g_points[selected-1][5]*sFactor>=0.5 || g_points[selected-1][5]<=2){
+      g_points[selected-1][5]*=sFactor;
       newMatrix.scale(sFactor, sFactor, sFactor);
     }
   }
@@ -763,16 +765,16 @@ function drawTree(gl, xy) {
 * ------------
 * gl              :: WebGLProgram containing shader program
 * u_MvpMatrix     :: GLint number indicating location of u_MvpMatrix variable in fragment shader
-* xy              :: a 4-tuple from g_points containing click data: (x-coord, y-coord, type, index)
+* xy              :: an 8-tuple from g_points containing click data: (x-coord, y-coord, z-coord, type, index, scale, alpha, beta)
 *
 * Outcome:
 * --------
 * Draws each cylinder inside tree by calling drawCylinder(...)
 */
-  if(xy[2] == 0 || xy[2] == 1)
-	var v = new Float32Array(treeR2);
+  if(xy[3] == 0 || xy[3] == 1)
+	  var v = new Float32Array(treeR2);
   else
-	var v = new Float32Array(treeR3);  
+	  var v = new Float32Array(treeR3);  
  
   var n = v.length;
   for(var i = 0; i < n; i=i+6) {
@@ -788,7 +790,7 @@ function drawCylinder(gl, x1, y1, z1, x2, y2, z2, d, xy) {
 * u_MvpMatrix     :: GLint number indicating location of u_MvpMatrix variable in fragment shader
 * (x1,y1,z1)      :: center of top of cylinder
 * (x2,y2,z2)      :: center of base of cylinder
-* xy              :: a 4-tuple from g_points containing click data: (x-coord, y-coord, type, index)
+* xy              :: an 8-tuple from g_points containing click data: (x-coord, y-coord, z-coord, type, index, scale, alpha, beta)
 * d               :: distance between two points
 *
 * Functionality
@@ -905,7 +907,7 @@ function drawCylinder(gl, x1, y1, z1, x2, y2, z2, d, xy) {
     console.log('Failed to get the storage location of m_Transformation');
     return;
   }
-  var tMatrix = matrices[xy[3]-1].elements;
+  var tMatrix = matrices[xy[4]-1].elements;
   gl.uniformMatrix4fv(m_Transformation, false, tMatrix);
   
   var u_Color = gl.getUniformLocation(gl.program, 'u_Color');
@@ -920,7 +922,7 @@ function drawCylinder(gl, x1, y1, z1, x2, y2, z2, d, xy) {
     return;
   }
   
-  var r_id = xy[3]/51; //Encoding tree id as color value (max 50 trees)
+  var r_id = xy[4]/51; //Encoding tree id as color value (max 50 trees)
   
   gl.uniform4f(u_idColor, r_id, 1.0, 0.0, 1.0);
 
@@ -928,13 +930,13 @@ function drawCylinder(gl, x1, y1, z1, x2, y2, z2, d, xy) {
   // gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); 
   // Draw
   if (mode == 0){
-    if(xy[2] == 0){
+    if(xy[3] == 0){
       gl.uniform4f(u_Color, 1.0, 0.0, 0.0, 1.0);
     }
-    else if (xy[2] == 2){
+    else if (xy[3] == 2){
       gl.uniform4f(u_Color, 0.0, 0.0, 1.0, 1.0);
     }
-    else if (xy[2] == 1 || xy[2] == 3){
+    else if (xy[3] == 1 || xy[3] == 3){
       gl.uniform4f(u_Color, 0.0, 1.0, 0.0, 1.0);
     }
     
