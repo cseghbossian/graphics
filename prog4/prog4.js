@@ -14,7 +14,7 @@ var VSHADER_SOURCE =
   'uniform vec3 u_LightDirection_1;\n' + // Light direction (in the world coordinate, normalized)
   'uniform mat4 u_MvpMatrix;\n' +        // View matrix
   'uniform bool u_Clicked;\n' +          // Mouse is pressed
-  'uniform bool u_LightOff;\n' +          // Light is off
+  'uniform bool u_LightOff;\n' +         // Light is off
   'varying vec4 v_Color;\n' +            // Final color of vertex to be passed to frag shader
 
   'void main() {\n' +
@@ -22,7 +22,7 @@ var VSHADER_SOURCE =
   //Diffuse Calculations
   '  vec3 u_Kd_2 = vec3(0.5,0.5,1.0);\n' + // bluish orb light color
   '  vec3 u_LightDirection_2 = vec3(-0.5,-0.5,0);\n' + // Light direction from Orb
-  '  gl_Position = u_MvpMatrix * m_Transformation * (a_Position + u_Translation);\n' +  
+  '  gl_Position = u_MvpMatrix * ((m_Transformation * a_Position) + u_Translation);\n' +  
   '  vec3 normal = normalize(a_Normal.xyz);\n' +
   '  float lambertian_1 = max(dot(u_LightDirection_1, normal), 0.0);\n' + 
   '  float lambertian_2 = max(dot(u_LightDirection_2, normal), 0.0);\n' + 
@@ -89,6 +89,8 @@ var FSHADER_SOURCE =
 var g_points = [];                // Info for each click.  g_points = [x,y,btn,id,z,s,alpha,beta]
 var matrices = [];                // The array of cumulative transformation matrices for trees
 var sphereMatrix = new Matrix4(); // The cumulative transformation matrix for sphere
+var sphere_data = [0,0,0,1,0,0];  // Transformation info for sphere sphere_data = [x,y,z,s,alpha,beta]
+
 var light = 0;                    // Light on/off
 var mode = 0;                     // Solid/Wireframe
 var clickMode = 0;                // Selection/Creation
@@ -538,35 +540,33 @@ function setTransMatrix(downX, downY, upX, upY, btn, l) {
 * --------
 * Updates the selected tree's matrix or light matrix depending on mouse events
 */
-  var cMatrix = new Matrix4();
-
-  if(l==0){
-    if(selected==0){return;}
-    cMatrix.set(matrices[selected-1]);
-
-  }
-  else {
-    cMatrix.set(sphereMatrix);
-  }
-  
-  
-  
-  var invMatrix = new Matrix4();
-  invMatrix.setInverseOf(cMatrix);
-  
-  var newMatrix = new Matrix4();
+  if(l==0 && selected==0){return;}
 
   //rotating
   if(btn == 2) {
     if(Math.abs(downX-upX) > Math.abs(downY-upY)){
       console.log("rotating about z-axis", downX-upX);
-      var rad = (downX-upX)*Math.PI/30;
-      newMatrix.rotate(rad, 0, 0, 1);
+      var rad = (downX-upX)*Math.PI/15;
+      if(l==0){
+        g_points[selected-1][7] += rad;
+        //g_points[selected-1][7] = g_points[selected-1][7] % 360;
+      }
+      else{
+        sphere_data[5] += rad;
+        //sphere_data[5] = sphere_data[5] % 360;
+      }
     }
     else {
       console.log("rotating about x-axis", downY-upY);
       var rad = (downY-upY)*Math.PI/15;
-      newMatrix.rotate(rad, 1, 0, 0);
+      if(l==0){
+        g_points[selected-1][6] += rad;
+        //g_points[selected-1][6] = g_points[selected-1][7] % 360;
+      }
+      else{
+        sphere_data[4] += rad;
+        //sphere_data[4] = sphere_data[4] % 360;
+      }
     }
   }
   //translating along x, y
@@ -574,42 +574,62 @@ function setTransMatrix(downX, downY, upX, upY, btn, l) {
     console.log("translating on x- and y-axes"); 
     var xdisp = upX - downX;
     var ydisp = downY - upY;
-    newMatrix.translate(xdisp/2, ydisp/2, 0);
+    if(l==0){
+      g_points[selected-1][0] += xdisp/SpanX;
+      g_points[selected-1][1] += ydisp/SpanY;
+    }
+    else {
+      sphere_data[0] += xdisp;
+      sphere_data[1] += ydisp;
+    }
+    console.log("xdisp ", xdisp, "ydisp", ydisp);
   }
   //translating along z
   else if(btn==1) {
     console.log("translating on z-axis");
-    newMatrix.translate(0, 0, (downY-upY)/2);
+    if(l==0){
+      g_points[selected-1][2] += (downY-upY)/2;
+    }
+    else {
+      sphere_data[2] += (downY-upY)/2;
+    }
   }
   //scaling
   else {
     console.log("scaling", btn);
     var sFactor = 1 + (0.03*btn/120);
-    if(g_points[selected-1][5]*sFactor>=0.5 || g_points[selected-1][5]<=2){
-      g_points[selected-1][5]*=sFactor;
-      newMatrix.scale(sFactor, sFactor, sFactor);
+    if(l==0){
+      if(g_points[selected-1][5]*sFactor>=0.5 && g_points[selected-1][5]<=2){
+        g_points[selected-1][5]*=sFactor;
+      }
     }
+    else {
+      if(sphere_data[3]*sFactor>=0.5 && sphere_data[3]<=2){
+        sphere_data[3]*=sFactor;
+      }
+    }
+
   }
 
+  var cMatrix = new Matrix4();
   if(l==0) {
-    //return to origin
-    matrices[selected-1].multiply(invMatrix);
-    matrices[selected-1].translate(-(SpanX*g_points[selected-1][0]),-(SpanY*g_points[selected-1][1]),0);
+    cMatrix.rotate(g_points[selected-1][6], 1, 0, 0);
+    cMatrix.rotate(g_points[selected-1][7], 0, 0, 1);
 
-    //apply new transformation
-    matrices[selected-1].multiply(newMatrix);
-    matrices[selected-1].multiply(cMatrix);
-    matrices[selected-1].translate((SpanX*g_points[selected-1][0]),(SpanY*g_points[selected-1][1]),0);
+    var s = g_points[selected-1][5];
+    cMatrix.scale(s,s,s)
+    matrices[selected-1] = cMatrix;
   }
   else{
-    //return to origin
-    sphereMatrix.multiply(invMatrix);
+    cMatrix.rotate(sphere_data[4], 1, 0, 0);
+    cMatrix.rotate(sphere_data[5], 0, 0, 1);
 
-    //apply new transformation
-    sphereMatrix.multiply(newMatrix);
-    sphereMatrix.multiply(cMatrix);
+    var s = sphere_data[3];
+    cMatrix.scale(s,s,s)
+
+    sphereMatrix = cMatrix;
   }
-
+  console.log(cMatrix);
 }
 
 //Draw function
@@ -707,7 +727,7 @@ function drawOrb(gl) {
     console.log('Failed to get the storage location of u_Translation');
     return;
   }
-  gl.uniform4f(u_Translation, 0, 0, 0, 0);
+  gl.uniform4f(u_Translation, sphere_data[0], sphere_data[1], sphere_data[2], 0);
 
   // Pass the mouse transformation to the vertex shader
   var m_Transformation = gl.getUniformLocation(gl.program, 'm_Transformation');
@@ -899,7 +919,7 @@ function drawCylinder(gl, x1, y1, z1, x2, y2, z2, d, xy) {
     console.log('Failed to get the storage location of u_Translation');
     return;
   }
-  gl.uniform4f(u_Translation, SpanX*xy[0], SpanY*xy[1], 0, 0);
+  gl.uniform4f(u_Translation, SpanX*xy[0], SpanY*xy[1], xy[2], 0);
 
   // Pass the mouse transformation to the vertex shader
   var m_Transformation = gl.getUniformLocation(gl.program, 'm_Transformation');
